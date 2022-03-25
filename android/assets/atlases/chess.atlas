@@ -1,0 +1,281 @@
+
+chess.png
+size: 2048, 2048
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+background
+  rotate: false
+  xy: 2, 172
+  size: 1000, 1000
+  orig: 1000, 1000
+  offset: 0, 0
+  index: -1
+blue_frame
+  rotate: false
+  xy: 1834, 1616
+  size: 127, 127
+  orig: 127, 127
+  offset: 0, 0
+  index: -1
+board2_down
+  rotate: false
+  xy: 2, 1174
+  size: 1830, 830
+  orig: 1830, 830
+  offset: 0, 0
+  index: -1
+coin
+  rotate: false
+  xy: 1834, 1874
+  size: 129, 130
+  orig: 129, 130
+  offset: 0, 0
+  index: -1
+down_white_choice
+  rotate: false
+  xy: 1004, 2
+  size: 859, 584
+  orig: 859, 584
+  offset: 0, 0
+  index: -1
+green_frame
+  rotate: false
+  xy: 1834, 1745
+  size: 127, 127
+  orig: 127, 127
+  offset: 0, 0
+  index: -1
+red_frame
+  rotate: false
+  xy: 1834, 1358
+  size: 127, 127
+  orig: 127, 127
+  offset: 0, 0
+  index: -1
+transparent_rect_dialog
+  rotate: false
+  xy: 1004, 588
+  size: 859, 584
+  orig: 859, 584
+  offset: 0, 0
+  index: -1
+yellow_frame
+  rotate: false
+  xy: 1834, 1487
+  size: 127, 127
+  orig: 127, 127
+  offset: 0, 0
+  index: -1
+
+chess2.png
+size: 2048, 2048
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+board1_checked
+  rotate: false
+  xy: 2, 1106
+  size: 1830, 830
+  orig: 1830, 830
+  offset: 0, 0
+  index: -1
+board2_up
+  rotate: false
+  xy: 2, 274
+  size: 1830, 830
+  orig: 1830, 830
+  offset: 0, 0
+  index: -1
+empty_star
+  rotate: false
+  xy: 1262, 43
+  size: 240, 229
+  orig: 240, 229
+  offset: 0, 0
+  index: -1
+font_black
+  rotate: false
+  xy: 2, 2
+  size: 676, 270
+  orig: 676, 270
+  offset: 0, 0
+  index: -1
+font_green
+  rotate: false
+  xy: 680, 61
+  size: 338, 211
+  orig: 338, 211
+  offset: 0, 0
+  index: -1
+star
+  rotate: false
+  xy: 1020, 43
+  size: 240, 229
+  orig: 240, 229
+  offset: 0, 0
+  index: -1
+
+chess3.png
+size: 2048, 2048
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+board1_up
+  rotate: false
+  xy: 2, 834
+  size: 1830, 830
+  orig: 1830, 830
+  offset: 0, 0
+  index: -1
+board2_checked
+  rotate: false
+  xy: 2, 2
+  size: 1830, 830
+  orig: 1830, 830
+  offset: 0, 0
+  index: -1
+
+chess4.png
+size: 2048, 2048
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+board1_down
+  rotate: false
+  xy: 2, 1188
+  size: 1830, 830
+  orig: 1830, 830
+  offset: 0, 0
+  index: -1
+font_brown
+  rotate: false
+  xy: 1254, 102
+  size: 750, 498
+  orig: 750, 498
+  offset: 0, 0
+  index: -1
+iapp_logo2
+  rotate: false
+  xy: 2, 519
+  size: 1175, 667
+  orig: 1175, 667
+  offset: 0, 0
+  index: -1
+up_closed
+  rotate: false
+  xy: 2, 2
+  size: 1250, 515
+  orig: 1250, 515
+  offset: 0, 0
+  index: -1
+up_white_choice
+  rotate: false
+  xy: 1179, 602
+  size: 859, 584
+  orig: 859, 584
+  offset: 0, 0
+  index: -1
+
+chess5.png
+size: 2048, 2048
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+board
+  rotate: false
+  xy: 2, 2
+  size: 830, 830
+  orig: 830, 830
+  offset: 0, 0
+  index: -1
+dialog
+  rotate: false
+  xy: 1636, 225
+  size: 389, 690
+  orig: 389, 690
+  offset: 0, 0
+  index: -1
+down_closed
+  rotate: false
+  xy: 2, 834
+  size: 1250, 515
+  orig: 1250, 515
+  offset: 0, 0
+  index: -1
+font_gray
+  rotate: false
+  xy: 1254, 917
+  size: 702, 515
+  orig: 702, 515
+  offset: 0, 0
+  index: -1
+green_cross
+  rotate: false
+  xy: 834, 32
+  size: 800, 800
+  orig: 800, 800
+  offset: 0, 0
+  index: -1
+iapp_logo
+  rotate: false
+  xy: 2, 1351
+  size: 1175, 667
+  orig: 1175, 667
+  offset: 0, 0
+  index: -1
+rect_dialog
+  rotate: false
+  xy: 1179, 1434
+  size: 859, 584
+  orig: 859, 584
+  offset: 0, 0
+  index: -1
+
+chess6.png
+size: 2048, 1024
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+chess_icon
+  rotate: false
+  xy: 907, 474
+  size: 512, 512
+  orig: 512, 512
+  offset: 0, 0
+  index: -1
+chess_logo
+  rotate: false
+  xy: 1421, 474
+  size: 512, 512
+  orig: 512, 512
+  offset: 0, 0
+  index: -1
+down_green_choice
+  rotate: false
+  xy: 393, 2
+  size: 709, 470
+  orig: 709, 470
+  offset: 0, 0
+  index: -1
+logo
+  rotate: false
+  xy: 393, 474
+  size: 512, 512
+  orig: 512, 512
+  offset: 0, 0
+  index: -1
+res_dialog
+  rotate: false
+  xy: 2, 296
+  size: 389, 690
+  orig: 389, 690
+  offset: 0, 0
+  index: -1
+up_green_choice
+  rotate: false
+  xy: 1104, 2
+  size: 709, 470
+  orig: 709, 470
+  offset: 0, 0
+  index: -1

@@ -1,0 +1,17 @@
+{
+  "com.badlogic.gdx.graphics.Color": {
+    "white": { "a": 1, "b": 1, "g": 1, "r": 1 },
+    "red": { "a": 1, "b": 0, "g": 0, "r": 1 },
+    "black": { "a": 1, "b": 0, "g": 0, "r": 0 }
+  },
+  "com.badlogic.gdx.scenes.scene2d.ui.TextButton$TextButtonStyle": {
+    "default": { "down": "font_gray", "up": "font_black", "font": "arial", "fontColor": "white" },
+    "toggle": { "down": "font_green", "up": "font_black", "checked": "font_green", "font": "arial", "fontColor": "white" },
+    "settings": { "down": "font_gray", "up": "font_brown", "font": "arial", "fontColor": "white" },
+    "closed": { "down": "down_closed", "up": "up_closed", "font": "arial", "fontColor": "white" }
+  },
+  "com.badlogic.gdx.scenes.scene2d.ui.ImageButton$ImageButtonStyle": {
+    "board1": { "down": "board1_down", "up": "board1_up", "checked": "board1_checked" },
+    "board2": { "down": "board2_down", "up": "board2_up", "checked": "board2_checked"  }
+  }
+}

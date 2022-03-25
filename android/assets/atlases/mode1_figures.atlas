@@ -1,0 +1,90 @@
+
+mode1_figures.png
+size: 2048, 1024
+format: RGBA8888
+filter: Nearest, Nearest
+repeat: none
+black_bishop
+  rotate: false
+  xy: 304, 606
+  size: 300, 300
+  orig: 300, 300
+  offset: 0, 0
+  index: -1
+black_king
+  rotate: false
+  xy: 304, 304
+  size: 300, 300
+  orig: 300, 300
+  offset: 0, 0
+  index: -1
+black_knight
+  rotate: false
+  xy: 1210, 649
+  size: 255, 257
+  orig: 255, 257
+  offset: 0, 0
+  index: -1
+black_pawn
+  rotate: false
+  xy: 2, 304
+  size: 300, 300
+  orig: 300, 300
+  offset: 0, 0
+  index: -1
+black_queen
+  rotate: false
+  xy: 606, 304
+  size: 300, 300
+  orig: 300, 300
+  offset: 0, 0
+  index: -1
+black_rook
+  rotate: false
+  xy: 908, 606
+  size: 300, 300
+  orig: 300, 300
+  offset: 0, 0
+  index: -1
+white_bishop
+  rotate: false
+  xy: 304, 2
+  size: 300, 300
+  orig: 300, 300
+  offset: 0, 0
+  index: -1
+white_king
+  rotate: false
+  xy: 2, 2
+  size: 300, 300
+  orig: 300, 300
+  offset: 0, 0
+  index: -1
+white_knight
+  rotate: false
+  xy: 908, 347
+  size: 257, 257
+  orig: 257, 257
+  offset: 0, 0
+  index: -1
+white_pawn
+  rotate: false
+  xy: 2, 606
+  size: 300, 300
+  orig: 300, 300
+  offset: 0, 0
+  index: -1
+white_queen
+  rotate: false
+  xy: 606, 45
+  size: 279, 257
+  orig: 279, 257
+  offset: 0, 0
+  index: -1
+white_rook
+  rotate: false
+  xy: 606, 606
+  size: 300, 300
+  orig: 300, 300
+  offset: 0, 0
+  index: -1

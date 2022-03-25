@@ -1,0 +1,39 @@
+{
+  "com.badlogic.gdx.graphics.Color": {
+    "white": { "a": 1, "b": 1, "g": 1, "r": 1 },
+    "red": { "a": 1, "b": 0, "g": 0, "r": 1 },
+    "black": { "a": 1, "b": 0, "g": 0, "r": 0 }
+  },
+  "com.badlogic.gdx.scenes.scene2d.ui.Label$LabelStyle": {
+    "default": {
+      "font": "arial"
+    }
+  },
+  "com.badlogic.gdx.scenes.scene2d.ui.TextButton$TextButtonStyle": {
+    "choice1": {"up": "up_choice1", "down": "down_choice1", "checked": "down_choice1", "font": "arial", "fontColor": "white"},
+    "choice2": {"up": "up_choice2", "down": "down_choice2", "checked": "down_choice2", "font": "arial", "fontColor": "white"},
+    "choice3": {"up": "up_choice3", "down": "down_choice3", "checked": "down_choice3", "font": "arial", "fontColor": "white"},
+    "play": {"up": "up_play", "down": "down_play", "font": "arial", "fontColor": "white"},
+    "settings": {"up": "up_settings", "down": "down_settings", "font": "arial", "fontColor": "white"}
+    "button": {"up": "up_btn", "down": "down_btn", "font": "arial", "fontColor": "white"}
+  },
+  "com.badlogic.gdx.scenes.scene2d.ui.ImageButton$ImageButtonStyle": {
+    "check": { "up": "up_check", "down": "down_check", "checked": "down_check", },
+    "back": { "up": "up_back", "down": "down_back", },
+    "cancel": {"up": "cancel_up", "down": "cancel_down"}
+    "rect": {"up": "up_rect_btn", "down": "down_rect_btn"}
+    "button": {"up": "up_btn", "down": "down_btn"}
+    "gray_cancel": {"up": "gray_cancel_up", "down": "gray_cancel_down"}
+  },
+  "com.badlogic.gdx.scenes.scene2d.ui.ScrollPane$ScrollPaneStyle": {
+    "default": {
+      "vScroll": "pane_line_v",
+      "vScrollKnob": "pane_v",
+      "hScroll": "pane_line_h",
+      "hScrollKnob": "pane_h",
+    }
+  },
+  "com.badlogic.gdx.scenes.scene2d.ui.Window$WindowStyle": {
+    "default": { "titleFont": "arial", "background": "show_dialog", "titleFontColor": "white" },
+  },
+}
