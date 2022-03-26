@@ -309,7 +309,7 @@ public class Controller {
     }
 
     public void backMove() {
-        if (isBlockedGame() || game.isEmptyTransitions()) return;
+        if (isBlockedGame() || game.isEmptyTransitions() || isFinishGame()) return;
         Settings.account.setDrawableGreenCross(false);
         Settings.account.setDrawableOutlineFigure(false);
         gameView.clearMoves();
@@ -394,7 +394,7 @@ public class Controller {
     }
 
     public void showPromptingMove() {
-        if (blockedGame.get()) return;
+        if (blockedGame.get() || isFinishGame()) return;
 
         Transition promptingTransit = promptingAI.getMove();
         if (promptingTransit == null) return;
