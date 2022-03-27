@@ -36,4 +36,9 @@ public class IOSLauncher extends IOSApplication.Delegate implements Launcher {
     public void addOnFinish(CallListener callListener) {
         throw new UnsupportedOperationException();
     }
+
+    @Override
+    public int[] getDeviceScreen() {
+        throw new UnsupportedOperationException();
+    }
 }

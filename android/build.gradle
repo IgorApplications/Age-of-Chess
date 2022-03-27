@@ -20,8 +20,8 @@ android {
         applicationId "com.iapp.chess"
         minSdkVersion 24
         targetSdkVersion 32
-        versionCode 18
-        versionName "0.8 BETA"
+        versionCode 19
+        versionName "0.8.1 BETA"
     }
     buildTypes {
         release {

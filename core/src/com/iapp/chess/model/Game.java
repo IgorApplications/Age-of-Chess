@@ -427,25 +427,25 @@ public class Game implements Serializable {
         List<Move> castlingMoves = new ArrayList<>();
         if (!(self instanceof King)) return castlingMoves;
 
-        if (isCastlingPossible(7, TypeCastling.LEFT)) {
+        if (isCastlingPossible(self.getColor(), 7, TypeCastling.LEFT)) {
             Move castlingMove = new Move(2, 7);
             castlingMove.setCastlingMove(true);
             castlingMoves.add(castlingMove);
         }
 
-        if (isCastlingPossible(7, TypeCastling.RIGHT)) {
+        if (isCastlingPossible(self.getColor(), 7, TypeCastling.RIGHT)) {
             Move castlingMove = new Move(6, 7);
             castlingMove.setCastlingMove(true);
             castlingMoves.add(castlingMove);
         }
 
-        if (isCastlingPossible(0, TypeCastling.LEFT)) {
+        if (isCastlingPossible(self.getColor(), 0, TypeCastling.LEFT)) {
             Move castlingMove = new Move(2, 0);
             castlingMove.setCastlingMove(true);
             castlingMoves.add(castlingMove);
         }
 
-        if (isCastlingPossible(0, TypeCastling.RIGHT)) {
+        if (isCastlingPossible(self.getColor(), 0, TypeCastling.RIGHT)) {
             Move castlingMove = new Move(6, 0);
             castlingMove.setCastlingMove(true);
             castlingMoves.add(castlingMove);
@@ -454,7 +454,9 @@ public class Game implements Serializable {
         return castlingMoves;
     }
 
-    private boolean isCastlingPossible(int y, TypeCastling typeCastling) {
+    private boolean isCastlingPossible(Color kingColor, int y, TypeCastling typeCastling) {
+        if (isCheckKing(kingColor)) return false;
+
         boolean castlingPossible = game[y][typeCastling.rookX] instanceof Rook && game[y][typeCastling.kingX] instanceof King;
         for (int x : typeCastling.cageX) {
             castlingPossible = castlingPossible && game[y][x] instanceof Cage;

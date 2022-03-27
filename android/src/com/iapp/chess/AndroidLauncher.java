@@ -37,6 +37,11 @@ public class AndroidLauncher extends AndroidApplication implements Launcher {
 	}
 
 	@Override
+	public int[] getDeviceScreen() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public void finish() {
 		if (onFinish != null) onFinish.call();
 		else super.finish();

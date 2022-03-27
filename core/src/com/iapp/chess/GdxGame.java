@@ -151,6 +151,7 @@ public class GdxGame extends Game {
 
 	public void goToMenu(GameView gameView, boolean saveGame) {
 		Settings.controller.unblockGame();
+		Settings.account.setDrawableHintMoves(true);
 
 		if (saveGame) Settings.controller.saveGame();
 		else Settings.controller.removeSavedGame();
@@ -162,6 +163,7 @@ public class GdxGame extends Game {
 
 	public void goToGame(Screen lastScreen) {
 		Settings.controller.unblockGame();
+		Settings.account.setDrawableHintMoves(true);
 
 		GameView gameView = new GameView();
 		Settings.controller.setGameView(gameView);

@@ -39,29 +39,29 @@ public class Account implements Serializable {
     private volatile transient boolean drawableGreenCross = true;
 
     private volatile boolean blockedOutlineFigure;
-    private volatile  boolean blockedOutlineFelledFigure;
-    private volatile  boolean blockedHintMoves;
-    private volatile  boolean blockedHintCastle;
-    private volatile  boolean blockedHintCheck;
-    private volatile  boolean blockedGreenCross;
+    private volatile boolean blockedOutlineFelledFigure;
+    private volatile boolean blockedHintMoves;
+    private volatile boolean blockedHintCastle;
+    private volatile boolean blockedHintCheck;
+    private volatile boolean blockedGreenCross;
 
-    private volatile  boolean blockedSoundClick;
-    private volatile  boolean blockedSoundMove;
-    private volatile  boolean blockedSoundCastle;
-    private volatile  boolean blockedSoundCheck;
-    private volatile  boolean blockedSoundWin;
-    private volatile  boolean blockedSoundWinMaster;
-    private volatile  boolean blockedSoundLose;
+    private volatile boolean blockedSoundClick;
+    private volatile boolean blockedSoundMove;
+    private volatile boolean blockedSoundCastle;
+    private volatile boolean blockedSoundCheck;
+    private volatile boolean blockedSoundWin;
+    private volatile boolean blockedSoundWinMaster;
+    private volatile boolean blockedSoundLose;
 
     private transient Random random = new Random();
 
     public Account() {
         if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
             type = Orientation.Type.HORIZONTAL;
-            windowSize = new Pair<>(900, 500);
+            windowSize = new Pair<>(1300, 722);
         } else {
             type = Orientation.Type.VERTICAL;
-            windowSize = new Pair<>(500, 900);
+            windowSize = new Pair<>(722, 1300);
         }
 
         figureSets.put(FigureSet.STANDARD, new Pair<>(true, true));
@@ -294,7 +294,17 @@ public class Account implements Serializable {
     }
 
     public Pair<Integer, Integer> getWindowSize() {
-        if (!saveWindowSize) windowSize = new Pair<>(900, 500);
+        if (!saveWindowSize)  windowSize = new Pair<>(1300, 722);
+
+        if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
+            int[] size = Settings.launcher.getDeviceScreen();
+
+            if (windowSize.getKey() >= size[0] && windowSize.getValue() >= size[1]) {
+                windowSize.setValue(windowSize.getValue() - 45);
+                windowSize.setKey((int) Math.round(windowSize.getValue() * 1.8));
+            }
+        }
+
         return windowSize;
     }
 

@@ -310,6 +310,10 @@ public class Controller {
 
     public void backMove() {
         if (isBlockedGame() || game.isEmptyTransitions() || isFinishGame()) return;
+
+        gameView.clearBlueHint();
+        Settings.account.setDrawableHintMoves(true);
+
         Settings.account.setDrawableGreenCross(false);
         Settings.account.setDrawableOutlineFigure(false);
         gameView.clearMoves();
@@ -332,6 +336,9 @@ public class Controller {
     public void backTurn() {
         if (aiColor == Color.WHITE && game.getMove() == 1) return;
         if (isBlockedGame() || game.isEmptyTransitions() || isFinishGame()) return;
+
+        gameView.clearBlueHint();
+        Settings.account.setDrawableHintMoves(true);
 
         Settings.account.setDrawableGreenCross(false);
         Settings.account.setDrawableOutlineFigure(false);

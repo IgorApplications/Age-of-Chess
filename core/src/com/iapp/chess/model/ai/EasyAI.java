@@ -16,16 +16,9 @@ public class EasyAI extends OldAI {
     public Transition getMove() {
         Transition savingTransit = getMoveForSaveFigure();
         Transition safeTransit = getSafeMove();
-        if (savingTransit == null && safeTransit != null) {
-            return safeTransit;
-        } else if (safeTransit == null && savingTransit != null) {
-            return savingTransit;
-        } else if (savingTransit != null){
-            Figure felledFigure = this.findFelledFigure(this.aiColor);
-            Figure safeFigure = this.cloneGame.getFigure(safeTransit.getMove());
 
-            return this.sortAscendingOrder.compare(felledFigure, safeFigure) > 0 ? savingTransit : safeTransit;
-        }
+        if (savingTransit != null) return safeTransit;
+        if (safeTransit != null) return safeTransit;
 
         return getRandomMove();
     }
@@ -56,7 +49,7 @@ public class EasyAI extends OldAI {
                 var5 = getAttackingMoves(aiFigure).iterator();
 
                 while(var5.hasNext()) {
-                    aiMove = (Move)var5.next();
+                    aiMove = var5.next();
                     if (this.isMoveSavingForFigure(felledFigure, aiFigure, aiMove)) {
                         return new Transition(cloneGame, aiFigure.getX(), aiFigure.getY(), aiMove);
                     }
@@ -66,11 +59,11 @@ public class EasyAI extends OldAI {
             var8 = aiFigures.iterator();
 
             while(var8.hasNext()) {
-                aiFigure = (Figure)var8.next();
+                aiFigure = var8.next();
                 var5 = this.cloneGame.getMoves(aiFigure).iterator();
 
                 while(var5.hasNext()) {
-                    aiMove = (Move)var5.next();
+                    aiMove = var5.next();
                     if (this.isMoveSavingForFigure(felledFigure, aiFigure, aiMove)) {
                         return new Transition(cloneGame, aiFigure.getX(), aiFigure.getY(), aiMove);
                     }
@@ -115,19 +108,16 @@ public class EasyAI extends OldAI {
             if (nextAttackedTransit != null) {
                 return nextAttackedTransit;
             } else {
-                for(int i = 0; i < 100; ++i) {
-                    Transition randTransit = getRandomMove();
-                    if (randTransit == null) {
-                        return null;
-                    }
+                Transition randTransit = getRandomMove();
+                if (randTransit == null) {
+                    return null;
+                }
 
-                    Figure aiFigure = this.cloneGame.getFigure(randTransit);
-                    this.move(aiFigure, randTransit.getMove());
-                    Figure cutDownFigure = this.findFelledFigure(this.aiColor);
-                    this.backMove();
-                    if (cutDownFigure == null || this.isFigureProtectedByAnotherFigure(cutDownFigure) || cutDownFigure instanceof Pawn) {
-                        return new Transition(cloneGame, aiFigure.getX(), aiFigure.getY(), randTransit.getMove());
-                    }
+                Figure aiFigure = this.cloneGame.getFigure(randTransit);
+                this.move(aiFigure, randTransit.getMove());Figure cutDownFigure = this.findFelledFigure(this.aiColor);
+                this.backMove();
+                if (cutDownFigure == null || this.isFigureProtectedByAnotherFigure(cutDownFigure) || cutDownFigure instanceof Pawn) {
+                    return new Transition(cloneGame, aiFigure.getX(), aiFigure.getY(), randTransit.getMove());
                 }
 
                 return null;

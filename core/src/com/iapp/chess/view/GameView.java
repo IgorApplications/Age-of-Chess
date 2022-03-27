@@ -433,6 +433,7 @@ public class GameView implements Screen {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 Settings.SOUNDS.playClick();
+
                 if (Settings.controller.getTurn() < 2) {
                     Settings.gdxGame.goToMenu(GameView.this, false);
                 } else {

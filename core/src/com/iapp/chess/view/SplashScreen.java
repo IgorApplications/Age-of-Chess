@@ -59,7 +59,6 @@ public class SplashScreen implements Screen {
     @Override
     public void show() {}
 
-    @SuppressWarnings("DefaultLocale")
     @Override
     public void render(float delta) {
         synchronized (Settings.MUTEX) {
@@ -117,9 +116,6 @@ public class SplashScreen implements Screen {
         if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
             int windowWidth = Settings.account.getWindowSize().getKey();
             int windowHeight = Settings.account.getWindowSize().getValue();
-
-            if (windowWidth > 900) windowWidth = 1260;
-            if (windowHeight > 900) windowHeight = 700;
 
             Gdx.graphics.setWindowedMode(windowWidth, windowHeight);
         }

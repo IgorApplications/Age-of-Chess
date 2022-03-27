@@ -15,7 +15,6 @@ public class SaveData {
     public SaveData() {
         if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
             accountHandler = Gdx.files.external("account.dat");
-            System.out.println(accountHandler.path());
         } else {
             accountHandler = Gdx.files.local("account.dat");
         }
