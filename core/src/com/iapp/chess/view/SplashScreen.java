@@ -27,7 +27,7 @@ public class SplashScreen implements Screen {
     private Texture logo1;
     private Texture logo2;
 
-    private float progress, lastProgress;
+    private volatile float progress, lastProgress;
 
     public SplashScreen() {
         if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
@@ -153,7 +153,7 @@ public class SplashScreen implements Screen {
             while (true) {
                 if (progress <= 0.4f || progress > 0.7f) {
                     setLogo(logo1);
-                } else if (progress > 0.4f && progress <= 0.7f) {
+                } else if (progress > 0.4f) {
                     setLogo(logo2);
                 }
             }

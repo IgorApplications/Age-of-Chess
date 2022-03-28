@@ -29,7 +29,7 @@ import java.util.concurrent.Executors;
 
 public class GdxGame extends Game {
 
-	private Launcher launcher;
+	private final Launcher launcher;
 	private TextureAtlas chessAtlas;
 	private TextureAtlas standardFigures;
 	private TextureAtlas modeFigures;
@@ -136,6 +136,7 @@ public class GdxGame extends Game {
 
 	@Override
 	public void dispose () {
+		Settings.controller.saveGame();
 		Settings.account.saveWindowSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 		Settings.DATA.saveAccount(Settings.account);
 
@@ -193,7 +194,7 @@ public class GdxGame extends Game {
 	public void goToScreen(Stage currentStage, RunnableAction intent, float duration) {
 		SequenceAction sequenceAction = new SequenceAction();
 
-		sequenceAction.addAction(Actions.run(() -> Settings.SOUNDS.playClick()));
+		sequenceAction.addAction(Actions.run(Settings.SOUNDS::playClick));
 		sequenceAction.addAction(Actions.moveBy(0, -currentStage.getHeight(), duration));
 		sequenceAction.addAction(intent);
 

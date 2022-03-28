@@ -18,9 +18,9 @@ public class Game implements Serializable {
 
     private Figure[][] game;
     private final LinkedList<Transition> transitions = new LinkedList<>();
-    private Color colorMove;
-    private Color upperColor;
-    private Color lowerColor;
+    private volatile Color colorMove;
+    private final Color upperColor;
+    private final Color lowerColor;
     private AI ai;
     // turn = 1
     private long move = 0;
@@ -232,12 +232,9 @@ public class Game implements Serializable {
 
     public List<Move> getMoves(int x, int y) {
         Figure figure = game[y][x];
-        try {
-            if (colorMove == Color.BLACK && figure.getColor() == Color.WHITE ||
-                    colorMove == Color.WHITE && figure.getColor() == Color.BLACK)
-                return new ArrayList<>();
-        } catch (Exception e) {
-            System.out.println(getFigure(x, y));
+
+        synchronized (Settings.MUTEX) {
+            if (colorMove != figure.getColor()) return new ArrayList<>();
         }
 
         List<Move> moves;

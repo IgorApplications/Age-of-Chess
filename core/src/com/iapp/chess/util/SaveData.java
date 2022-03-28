@@ -1,6 +1,5 @@
 package com.iapp.chess.util;
 
-import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.iapp.chess.controller.Account;
@@ -10,14 +9,10 @@ import java.io.*;
 
 public class SaveData {
 
-    private FileHandle accountHandler;
+    private final FileHandle accountHandler;
 
     public SaveData() {
-        if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
-            accountHandler = Gdx.files.external("account.dat");
-        } else {
-            accountHandler = Gdx.files.local("account.dat");
-        }
+        accountHandler = Gdx.files.external("account.dat");
     }
 
     public Game cloneGame(Game game) {

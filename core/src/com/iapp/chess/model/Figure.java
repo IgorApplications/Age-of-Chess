@@ -9,7 +9,7 @@ public abstract class Figure implements Serializable {
     private Game game;
     private int x;
     private int y;
-    private Color color;
+    private volatile Color color;
     private int evaluation;
 
     Figure(Game game, int x, int y, Color color, int evaluation) {

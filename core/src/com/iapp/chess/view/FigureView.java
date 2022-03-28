@@ -137,6 +137,13 @@ public class FigureView implements Serializable {
         doMove = true;
     }
 
+    private boolean cancel;
+
+    public void doMove(Move move, boolean cancel) {
+        doMove(move);
+        this.cancel = cancel;
+    }
+
     public void castle(Move castleMove, int x) {
         currentMove = castleMove;
         effectX = BoardMatrix.getPositionX(x) - BoardMatrix.getPositionX(this.x);
@@ -189,13 +196,25 @@ public class FigureView implements Serializable {
         sprite.setSize(Orientation.figureSpriteSize, Orientation.figureSpriteSize);
         batch.draw(sprite, BoardMatrix.getPositionX(x) - effectX + Orientation.figureMarginX, BoardMatrix.getPositionY(y) - effectY + Orientation.figureMarginY,
                 Orientation.figureSpriteSize, Orientation.figureSpriteSize);
+
         if (doMove && effectX < 0.1f && effectY < 0.1f && effectX > -0.1f && effectY > -0.1f) {
+
+            if ((type.getColor() == Settings.controller.getUserColor() && !cancel) || Settings.controller.haveAIFirstMove()) {
+                Settings.controller.setAIMakesMove(true);
+            }
+
+            if (type.getColor() == Settings.controller.getAIColor() && !cancel) {
+                Settings.controller.setAIMakesMove(false);
+            }
+
             effectX = 0;
             effectY = 0;
             doMove = false;
             if (currentMove != null && !currentMove.isCastlingMove() && makeSoundMove)
                 Settings.SOUNDS.playMove();
             makeSoundMove = true;
+
+            cancel = false;
         }
     }
 

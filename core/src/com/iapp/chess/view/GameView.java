@@ -31,8 +31,10 @@ public class GameView implements Screen {
     private SpriteBatch batch;
     private OrthographicCamera camera;
     private ShapeRenderer renderer;
+
     private Stage stage;
     private Label countMoves;
+    private Label aiMove;
 
     private TextureAtlas figures;
     private TextureAtlas.AtlasRegion background;
@@ -194,11 +196,17 @@ public class GameView implements Screen {
             synchronized (Settings.MUTEX) {
                 long turn = Settings.controller.getTurn();
                 if (turn != -1) {
-                    countMoves.setText(String.format("%d. %s", turn, Settings.controller.defineColorMove()));
+                    countMoves.setText(turn + ". " + Settings.controller.defineColorMove());
                 }
             }
         };
         Settings.gdxGame.execute(task2);
+
+        if (Settings.controller.isAIMakesMove()) {
+            aiMove.setText("Ход ИИ");
+        } else {
+            aiMove.setText("");
+        }
 
         stage.act(delta);
         stage.draw();
@@ -402,6 +410,10 @@ public class GameView implements Screen {
         countMoves.setFontScale(Orientation.labelCountMovesFontScale);
         countMoves.setPosition(Orientation.labelCountMovesX, Orientation.labelCountMovesY);
 
+        aiMove = new Label("", Settings.gdxGame.getLabelSkin());
+        aiMove.setFontScale(Orientation.labelCountMovesFontScale);
+        aiMove.setPosition(280, 492);
+
         Table header = new Table();
         header.setPosition(0, Orientation.headerY);
         header.setWidth(Orientation.cameraWidth);
@@ -420,6 +432,9 @@ public class GameView implements Screen {
 
         stage.addActor(header);
         stage.addActor(countMoves);
+        if (Settings.account.getChoiceLevel() != Level.TWO_PLAYERS) {
+            stage.addActor(aiMove);
+        }
     }
 
     private Dialog onFinish;
@@ -461,8 +476,8 @@ public class GameView implements Screen {
         buttonBack.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                if (Settings.controller.getLevel() == Level.TWO_PLAYERS) Settings.controller.backMove();
-                else Settings.controller.backTurn();
+                if (Settings.controller.getLevel() == Level.TWO_PLAYERS) Settings.controller.cancelMove();
+                else Settings.controller.cancelTurn();
             }
         });
 

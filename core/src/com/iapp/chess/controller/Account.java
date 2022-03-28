@@ -297,10 +297,8 @@ public class Account implements Serializable {
         if (!saveWindowSize)  windowSize = new Pair<>(1300, 722);
 
         if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
-            int[] size = Settings.launcher.getDeviceScreen();
-
-            if (windowSize.getKey() >= size[0] && windowSize.getValue() >= size[1]) {
-                windowSize.setValue(windowSize.getValue() - 45);
+            if (windowSize.getKey() >= Gdx.graphics.getDisplayMode().width && (windowSize.getValue() >= Gdx.graphics.getDisplayMode().height - 80)) {
+                windowSize.setValue(windowSize.getValue() - 70);
                 windowSize.setKey((int) Math.round(windowSize.getValue() * 1.8));
             }
         }

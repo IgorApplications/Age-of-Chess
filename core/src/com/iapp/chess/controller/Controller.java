@@ -85,6 +85,18 @@ public class Controller {
         blockedGame.addNegative();
     }
 
+    public boolean isAIMakesMove() {
+        return aiMakesMove;
+    }
+
+    public void setAIMakesMove(boolean aiMakesMove) {
+        this.aiMakesMove = aiMakesMove;
+    }
+
+    public Color getColorMove() {
+        return game.getColorMove();
+    }
+
     /**
      * function for get game figure of game {@link Controller#game}
      * @return list of game figures from the backend game matrix {@link Game#getGameFigures()}
@@ -140,6 +152,8 @@ public class Controller {
      * */
     public void resetGame(Level level) {
         this.level = level;
+        aiMakesMove = false;
+
         Game savedGame = Settings.account.getSavedGame(gameView, level);
 
         if (savedGame != null) {
@@ -157,6 +171,7 @@ public class Controller {
         promptingAI.setGame(game);
 
         if (game.getColorMove() == aiColor) {
+            aiMakesMove = true;
             moveAI();
         }
     }
@@ -169,7 +184,9 @@ public class Controller {
             aiThread.interrupt();
         }
         synchronized (Settings.MUTEX) {
-            Settings.account.saveGame(gameView, level, game);
+            if (game != null) {
+                Settings.account.saveGame(gameView, level, game);
+            }
         }
     }
 
@@ -182,6 +199,7 @@ public class Controller {
             aiThread.interrupt();
         }
         synchronized (Settings.MUTEX) {
+            game = null;
             Settings.account.removeSavedGame(level);
         }
     }
@@ -223,7 +241,7 @@ public class Controller {
     }
 
     public boolean haveAIFirstMove() {
-        return game.getMove() <= 3 && aiColor == Color.WHITE;
+        return game.getMove() == 1 && aiColor == Color.WHITE;
     }
 
     public King findCheckKing() {
@@ -244,6 +262,7 @@ public class Controller {
     }
 
     private Thread aiThread;
+    private volatile boolean aiMakesMove;
 
     public void moveAI() {
         if (game.getAI() == null || isFinishGame()) return;
@@ -277,6 +296,7 @@ public class Controller {
                 gameView.clearCheckKing();
                 drawCheckKingIfFound();
                 showDialogIfFinish();
+
             } catch (RuntimeException e) {
                 e.printStackTrace();
             }
@@ -308,18 +328,10 @@ public class Controller {
         showDialogIfFinish();
     }
 
-    public void backMove() {
-        if (isBlockedGame() || game.isEmptyTransitions() || isFinishGame()) return;
+    public void cancelMove() {
+        if (isValidCancel()) return;
 
-        gameView.clearBlueHint();
-        Settings.account.setDrawableHintMoves(true);
-
-        Settings.account.setDrawableGreenCross(false);
-        Settings.account.setDrawableOutlineFigure(false);
-        gameView.clearMoves();
-        gameView.clearCheckKing();
-
-        backMove(game.getColorMove());
+        cancelMove(game.getColorMove());
         game.reverseColorMove();
         Settings.SOUNDS.playClick();
 
@@ -333,30 +345,21 @@ public class Controller {
         Settings.account.setDrawableOutlineFigure(true);
     }
 
-    public void backTurn() {
+    public void cancelTurn() {
         if (aiColor == Color.WHITE && game.getMove() == 1) return;
-        if (isBlockedGame() || game.isEmptyTransitions() || isFinishGame()) return;
-
-        gameView.clearBlueHint();
-        Settings.account.setDrawableHintMoves(true);
-
-        Settings.account.setDrawableGreenCross(false);
-        Settings.account.setDrawableOutlineFigure(false);
-        gameView.clearMoves();
-        gameView.clearCheckKing();
+        if (isValidCancel()) return;
 
         if (aiColor == Color.BLACK) {
-            backMove(aiColor);
-            backMove(userColor);
+            cancelMove(aiColor);
+            cancelMove(userColor);
         } else {
-            backMove(aiColor);
-            backMove(userColor);
+            cancelMove(aiColor);
+            cancelMove(userColor);
             if (game.getMove() == 1) {
-                backMove(aiColor);
-                if (haveAIFirstMove()) {
-                    game.setColorMove(aiColor);
-                    moveAI();
-                }
+                cancelMove(aiColor);
+                game.setColorMove(aiColor);
+                aiMakesMove = true;
+                moveAI();
             }
         }
         Settings.SOUNDS.playClick();
@@ -370,15 +373,28 @@ public class Controller {
         Settings.account.setDrawableOutlineFigure(true);
     }
 
-    private void backMove(Color moveColor) {
+    private boolean isValidCancel() {
+        if (isBlockedGame() || game.isEmptyTransitions() || isFinishGame()) return true;
+
+        gameView.clearBlueHint();
+        Settings.account.setDrawableHintMoves(true);
+
+        Settings.account.setDrawableGreenCross(false);
+        Settings.account.setDrawableOutlineFigure(false);
+        gameView.clearMoves();
+        gameView.clearCheckKing();
+        return false;
+    }
+
+    private void cancelMove(Color moveColor) {
         Transition lastTransit = game.backMove();
         if (lastTransit == null) return;
 
         FigureView figureView = gameView.findFigure(lastTransit.getMoveX(), lastTransit.getMoveY());
         figureView.setMakeSoundMove(false);
-        if (level == Level.TWO_PLAYERS) figureView.doMove(new Move(lastTransit.getFigureX(), lastTransit.getFigureY()));
+        if (level == Level.TWO_PLAYERS) figureView.doMove(new Move(lastTransit.getFigureX(), lastTransit.getFigureY()), true);
         else if (moveColor == aiColor) figureView.setPosition(lastTransit.getFigureX(), lastTransit.getFigureY());
-        else figureView.doMove(new Move(lastTransit.getFigureX(), lastTransit.getFigureY()));
+        else figureView.doMove(new Move(lastTransit.getFigureX(), lastTransit.getFigureY()), true);
 
         Figure saveFigure = lastTransit.getFelledFigure();
         if (saveFigure != null && !(saveFigure instanceof Cage)) {
@@ -394,14 +410,14 @@ public class Controller {
 
         if (lastTransit.isCastlingMove()) {
             FigureView rookView = gameView.findFigure(lastTransit.getRookX(), lastTransit.getRookY());
-            if (level == Level.TWO_PLAYERS) rookView.doMove(new Move(lastTransit.getLastRookX(), lastTransit.getLastRookY()));
+            if (level == Level.TWO_PLAYERS) rookView.doMove(new Move(lastTransit.getLastRookX(), lastTransit.getLastRookY()), true);
             else if (moveColor == aiColor) rookView.setPosition(lastTransit.getLastRookX(), lastTransit.getLastRookY());
-            else rookView.doMove(new Move(lastTransit.getLastRookX(), lastTransit.getLastRookY()));
+            else rookView.doMove(new Move(lastTransit.getLastRookX(), lastTransit.getLastRookY()), true);
         }
     }
 
     public void showPromptingMove() {
-        if (blockedGame.get() || isFinishGame()) return;
+        if (blockedGame.get() || isFinishGame() || isBlockedGame()) return;
 
         Transition promptingTransit = promptingAI.getMove();
         if (promptingTransit == null) return;

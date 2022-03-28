@@ -1,7 +1,6 @@
 package com.iapp.chess.model.ai;
 
 import com.iapp.chess.model.Color;
-import com.iapp.chess.model.Figure;
 import com.iapp.chess.model.Transition;
 
 public class MasterAI extends AI {
