@@ -58,10 +58,18 @@ public class Account implements Serializable {
     public Account() {
         if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
             type = Orientation.Type.HORIZONTAL;
-            windowSize = new Pair<>(1300, 722);
+
+            int value = Gdx.graphics.getDisplayMode().height - 70;
+            int key = (int) Math.round(value * 1.8);
+
+            windowSize = new Pair<>(key, value);
         } else {
             type = Orientation.Type.VERTICAL;
-            windowSize = new Pair<>(722, 1300);
+
+            int key = Gdx.graphics.getDisplayMode().width - 70;
+            int value = (int) Math.round(key * 1.8);
+
+            windowSize = new Pair<>(key, value);
         }
 
         figureSets.put(FigureSet.STANDARD, new Pair<>(true, true));
@@ -294,10 +302,9 @@ public class Account implements Serializable {
     }
 
     public Pair<Integer, Integer> getWindowSize() {
-        if (!saveWindowSize)  windowSize = new Pair<>(1300, 722);
-
         if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
-            if (windowSize.getKey() >= Gdx.graphics.getDisplayMode().width && (windowSize.getValue() >= Gdx.graphics.getDisplayMode().height - 80)) {
+            if (!saveWindowSize || (windowSize.getKey() >= Gdx.graphics.getDisplayMode().width &&
+                    (windowSize.getValue() >= Gdx.graphics.getDisplayMode().height - 90))) {
                 windowSize.setValue(windowSize.getValue() - 70);
                 windowSize.setKey((int) Math.round(windowSize.getValue() * 1.8));
             }

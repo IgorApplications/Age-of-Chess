@@ -2,6 +2,7 @@ package com.iapp.chess.model;
 
 import com.iapp.chess.model.ai.AI;
 import com.iapp.chess.model.ai.AIListener;
+import com.iapp.chess.util.Bool;
 import com.iapp.chess.util.Settings;
 
 import java.io.*;
@@ -152,6 +153,12 @@ public class Game implements Serializable {
         int figureX = figure.getX();
         int figureY = figure.getY();
 
+        for (Figure checkingFigure : getGameFigures()) {
+            if (checkingFigure instanceof Pawn) {
+                checkTakeOnPassMoves((Pawn) checkingFigure);
+            }
+        }
+
         if (getCastlingMoves(figure).contains(move)) {
             performCastle(figureX, figureY, move);
         } else {
@@ -194,6 +201,19 @@ public class Game implements Serializable {
             rook.setX(lastTransition.getLastRookX());
             rook.setY(lastTransition.getLastRookY());
             game[lastTransition.getLastRookY()][lastTransition.getLastRookX()] = rook;
+        } else if (lastTransition.getMove().isTakingMove()) {
+            Figure takenFigure = lastTransition.getMove().getTakenFigure();
+            game[takenFigure.getY()][takenFigure.getX()] = takenFigure;
+        }
+
+        for (Figure checkingFigure : getGameFigures()) {
+            if (checkingFigure instanceof Pawn) {
+                checkTakeOnPassMoves((Pawn) checkingFigure);
+            }
+        }
+
+        if (lastTransition.getMove().isTakingMove()) {
+            backReadyToTake((Pawn) getFigure(lastTransition.getFigureX(), lastTransition.getFigureY()));
         }
     }
 
@@ -233,6 +253,7 @@ public class Game implements Serializable {
     public List<Move> getMoves(int x, int y) {
         Figure figure = game[y][x];
 
+        // TODO
         synchronized (Settings.MUTEX) {
             if (colorMove != figure.getColor()) return new ArrayList<>();
         }
@@ -246,6 +267,9 @@ public class Game implements Serializable {
         else moves = figure.getMoves();
 
         moves.addAll(getCastlingMoves(figure));
+        if (figure instanceof Pawn) {
+            moves.addAll(getTakeOnPassMoves((Pawn) figure));
+        }
 
         List<Move> notCheckMoves = new ArrayList<>();
         for (Move move : moves) {
@@ -459,6 +483,75 @@ public class Game implements Serializable {
             castlingPossible = castlingPossible && game[y][x] instanceof Cage;
         }
         return castlingPossible;
+    }
+
+    private final Map<Pawn, Boolean> readyTakeLeft = new HashMap<>();
+    private final Map<Pawn, Boolean> readyTakeRight = new HashMap<>();
+
+    private void checkTakeOnPassMoves(Pawn pawn) {
+        if (pawn.getColor() == upperColor && pawn.getY() == 4) {
+            addReadyToTake(pawn);
+        }
+
+        if (pawn.getColor() == lowerColor && pawn.getY() == 3) {
+            addReadyToTake(pawn);
+        }
+    }
+
+    private List<Move> getTakeOnPassMoves(Pawn pawn) {
+        List<Move> takeTransitions = new ArrayList<>();
+
+        addTakingMove(pawn, takeTransitions, readyTakeLeft, -1);
+        addTakingMove(pawn, takeTransitions, readyTakeRight, 1);
+
+        return takeTransitions;
+    }
+
+    public void addTakingMove(Pawn pawn, List<Move> takeTransitions, Map<Pawn, Boolean> ready, int transitionX) {
+        if (ready.containsKey(pawn) && ready.get(pawn) && !(game[pawn.getY()][pawn.getX() + transitionX] instanceof Cage)) {
+
+            Move move = new Move(pawn.getX() + transitionX, (pawn.getY() == 4 ? 5 : 2));
+            move.setTakeOnPass(getFigure(pawn.getX() + transitionX, pawn.getY()));
+            takeTransitions.add(move);
+        }
+    }
+
+    private void addReadyToTake(Pawn pawn) {
+        int positX = pawn.getX() + 1;
+        int negatX = pawn.getX() - 1;
+
+        if (negatX != -1 && getFigure(pawn.getX() - 1, pawn.getY()) instanceof Cage) {
+            readyTakeLeft.put(pawn, true);
+        } else {
+            readyTakeLeft.put(pawn, false);
+        }
+
+        if (positX != 8 && getFigure(pawn.getX() + 1, pawn.getY()) instanceof Cage) {
+            readyTakeRight.put(pawn, true);
+        } else {
+            readyTakeRight.put(pawn, false);
+        }
+    }
+
+    private void backReadyToTake(Pawn pawn) {
+        int positX = pawn.getX() + 1;
+        int negatX = pawn.getX() - 1;
+
+
+        Figure figure1 = getFigure(pawn.getX() - 1, pawn.getY());
+        if (negatX != -1 && !(figure1 instanceof Cage) && figure1.getColor() != pawn.getColor()) {
+            readyTakeLeft.put(pawn, true);
+        }
+
+        Figure figure2 = getFigure(pawn.getX() + 1, pawn.getY());
+        if (positX != 8 && !(figure2 instanceof Cage) && figure2.getColor() != pawn.getColor()) {
+            readyTakeRight.put(pawn, true);
+        }
+    }
+
+    public void performTakeOnPass(Move move) {
+        int y = move.getY() == 2 ? 3 : 4;
+        game[y][move.getX()] = CAGE;
     }
 
     private void performCastle(int kingX, int kingY, Move kingMove) {

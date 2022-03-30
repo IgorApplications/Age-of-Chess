@@ -9,6 +9,9 @@ public class Move implements Serializable {
     private int moveY;
     private boolean castlingMove;
 
+    private boolean takingMove;
+    private Figure takenFigure;
+
     public Move(int moveX, int moveY) {
         this.moveX = moveX;
         this.moveY = moveY;
@@ -28,6 +31,28 @@ public class Move implements Serializable {
 
     public boolean isCastlingMove() {
         return castlingMove;
+    }
+
+
+    public void setTakeOnPass(Figure takenFigure) {
+        takingMove = true;
+        this.takenFigure = takenFigure;
+    }
+
+    public boolean isTakingMove() {
+        return takingMove;
+    }
+
+    public Figure getTakenFigure() {
+        return takenFigure;
+    }
+
+    public int getTakenFigureX() {
+        return takenFigure.getX();
+    }
+
+    public int getTakenFigureY() {
+        return takenFigure.getY();
     }
 
     @Override

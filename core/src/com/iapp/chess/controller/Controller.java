@@ -287,11 +287,19 @@ public class Controller {
                 gameView.drawGreenCross(figureView);
                 gameView.cutDown(figureView, transit.getMove());
                 gameView.drawChosenFigure(figureView);
-                if (getFigure(transit.getMoveX(), transit.getMoveY()) instanceof Queen && (figureView.getY() == 0 || figureView.getY() == 7)) {
+
+                Figure figure = getFigure(transit.getMoveX(), transit.getMoveY());
+                Move move = transit.getMove();
+
+                if (figure instanceof Queen && (figureView.getY() == 0 || figureView.getY() == 7)) {
                     transformPawnOnQueen(figureView.getX(), figureView.getY());
                 } else if (transit.getMove().isCastlingMove()) {
                     castle(transit.getMove());
+                } else if (figure instanceof Pawn && move.isTakingMove()) {
+                    game.performTakeOnPass(move);
+                    gameView.cutDown(figureView, new Move(move.getTakenFigureX(), move.getTakenFigureY()));
                 }
+
                 unblockGame();
                 gameView.clearCheckKing();
                 drawCheckKingIfFound();
@@ -320,7 +328,13 @@ public class Controller {
         move(figureView.getX(), figureView.getY(), move);
         figureView.moveView(move.getX(), move.getY());
 
-        if (move.isCastlingMove()) castle(move);
+        if (move.isCastlingMove()) {
+            castle(move);
+        }  else if (move.isTakingMove()) {
+            game.performTakeOnPass(move);
+            gameView.cutDown(figureView, new Move(move.getTakenFigureX(), move.getTakenFigureY()));
+        }
+
         gameView.cutDown(figureView, move);
         gameView.drawMoves(new ArrayList<>());
         gameView.clearCheckKing();
@@ -400,6 +414,11 @@ public class Controller {
         if (saveFigure != null && !(saveFigure instanceof Cage)) {
             FigureView saveFigureView = gameView.findInVisibleFigure(saveFigure);
             saveFigureView.setVisible(true);
+        }
+
+        if (lastTransit.getMove().isTakingMove()) {
+            FigureView takenView = gameView.findInVisibleFigure(lastTransit.getMove().getTakenFigure());
+            takenView.setVisible(true);
         }
 
         if (lastTransit.isUpdatedPawnMove()) {

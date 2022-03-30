@@ -203,7 +203,7 @@ public class GameView implements Screen {
         Settings.gdxGame.execute(task2);
 
         if (Settings.controller.isAIMakesMove()) {
-            aiMove.setText("Ход ИИ");
+            aiMove.setText(Text.MOVE_AI);
         } else {
             aiMove.setText("");
         }
@@ -238,8 +238,9 @@ public class GameView implements Screen {
         if (!canCutFigures) return;
 
         for (FigureView figure : figureViews) {
-            if (figure != selfFigure && figure.getX() == cutDownMove.getX() && figure.getY() == cutDownMove.getY())
+            if (figure != selfFigure && figure.getX() == cutDownMove.getX() && figure.getY() == cutDownMove.getY()) {
                 figure.setVisible(false);
+            }
         }
     }
 
@@ -411,8 +412,8 @@ public class GameView implements Screen {
         countMoves.setPosition(Orientation.labelCountMovesX, Orientation.labelCountMovesY);
 
         aiMove = new Label("", Settings.gdxGame.getLabelSkin());
-        aiMove.setFontScale(Orientation.labelCountMovesFontScale);
-        aiMove.setPosition(280, 492);
+        aiMove.setFontScale(Orientation.labelLevelFontScale);
+        aiMove.setPosition(Orientation.moveAIX, Orientation.moveAIY);
 
         Table header = new Table();
         header.setPosition(0, Orientation.headerY);

@@ -119,7 +119,6 @@ public class Transition implements Serializable {
         return updatedPawn != null;
     }
 
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

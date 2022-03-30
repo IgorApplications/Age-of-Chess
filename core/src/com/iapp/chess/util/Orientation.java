@@ -345,8 +345,8 @@ public class Orientation {
         BLACK_LINE_HEIGHT(80, 80),
         BLACK_LINE_Y(410, 810),
 
-        MOVE_AI_X(270, 10),
-        MOVE_AI_Y(486, 15),
+        MOVE_AI_X(280, 20),
+        MOVE_AI_Y(492, 725),
 
         /**
          * DialogView

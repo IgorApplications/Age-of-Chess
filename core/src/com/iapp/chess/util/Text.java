@@ -55,6 +55,7 @@ public class Text {
     public static final String MASTER_LEVEL_CAPS;
     public static final String SAVE;
     public static final String BACK;
+    public static final String MOVE_AI;
 
     /**
      * SettingsView
@@ -159,6 +160,7 @@ public class Text {
             SAVE = "Сохранить";
             YES = "Да";
             BACK = "Назад";
+            MOVE_AI = "Ход ИИ";
 
             GAME_MODE = "Режим игры";
             ORIENTATION_SCREEN = "Ориентация экрана";
@@ -251,6 +253,7 @@ public class Text {
             SAVE = "Save";
             YES = "Yes";
             BACK = "Back";
+            MOVE_AI = "AI turn";
 
             GAME_MODE = "Game mode";
             ORIENTATION_SCREEN = "Orientation screen";
