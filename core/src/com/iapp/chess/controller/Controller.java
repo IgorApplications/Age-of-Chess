@@ -1,5 +1,6 @@
 package com.iapp.chess.controller;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.iapp.chess.model.*;
 import com.iapp.chess.model.ai.*;
@@ -8,6 +9,7 @@ import com.iapp.chess.util.Settings;
 import com.iapp.chess.util.Text;
 import com.iapp.chess.view.FigureView;
 import com.iapp.chess.view.GameView;
+import jogamp.graph.font.typecast.ot.table.HdmxTable;
 
 import java.util.*;
 
@@ -199,7 +201,6 @@ public class Controller {
             aiThread.interrupt();
         }
         synchronized (Settings.MUTEX) {
-            game = null;
             Settings.account.removeSavedGame(level);
         }
     }
@@ -279,35 +280,39 @@ public class Controller {
                 }
             }
 
-            try {
-                if (Thread.currentThread().isInterrupted()) return;
+            if (Thread.currentThread().isInterrupted()) return;
 
-                FigureView figureView = gameView.findFigure(transit.getFigureX(), transit.getFigureY());
-                figureView.doMove(transit.getMove());
-                gameView.drawGreenCross(figureView);
-                gameView.cutDown(figureView, transit.getMove());
-                gameView.drawChosenFigure(figureView);
+            Gdx.app.postRunnable(() -> {
+                if (transit != null) game.move(transit);
 
-                Figure figure = getFigure(transit.getMoveX(), transit.getMoveY());
-                Move move = transit.getMove();
+                try {
+                    FigureView figureView = gameView.findFigure(transit.getFigureX(), transit.getFigureY());
+                    figureView.doMove(transit.getMove());
+                    gameView.drawGreenCross(figureView);
+                    gameView.cutDown(figureView, transit.getMove());
+                    gameView.drawChosenFigure(figureView);
 
-                if (figure instanceof Queen && (figureView.getY() == 0 || figureView.getY() == 7)) {
-                    transformPawnOnQueen(figureView.getX(), figureView.getY());
-                } else if (transit.getMove().isCastlingMove()) {
-                    castle(transit.getMove());
-                } else if (figure instanceof Pawn && move.isTakingMove()) {
-                    game.performTakeOnPass(move);
-                    gameView.cutDown(figureView, new Move(move.getTakenFigureX(), move.getTakenFigureY()));
+                    Figure figure = getFigure(transit.getMoveX(), transit.getMoveY());
+                    Move move = transit.getMove();
+
+                    if (figure instanceof Queen && (figureView.getY() == 0 || figureView.getY() == 7)) {
+                        transformPawnOnQueen(figureView.getX(), figureView.getY());
+                    } else if (transit.getMove().isCastlingMove()) {
+                        castle(transit.getMove());
+                    } else if (figure instanceof Pawn && move.isTakingMove()) {
+                        game.performTakeOnPass(transit.getMove());
+                        gameView.cutDown(figureView, new Move(move.getTakenFigureX(), move.getTakenFigureY()));
+                    }
+
+                    unblockGame();
+                    gameView.clearCheckKing();
+                    drawCheckKingIfFound();
+                    showDialogIfFinish();
+
+                } catch (RuntimeException e) {
+                    System.err.println("AI move failure, should be caused by thread interruption ->");
                 }
-
-                unblockGame();
-                gameView.clearCheckKing();
-                drawCheckKingIfFound();
-                showDialogIfFinish();
-
-            } catch (RuntimeException e) {
-                e.printStackTrace();
-            }
+            });
         });
     }
 
@@ -328,6 +333,7 @@ public class Controller {
         move(figureView.getX(), figureView.getY(), move);
         figureView.moveView(move.getX(), move.getY());
 
+        Figure figure = getFigure(move.getX(), move.getY());
         if (move.isCastlingMove()) {
             castle(move);
         }  else if (move.isTakingMove()) {
@@ -438,15 +444,16 @@ public class Controller {
     public void showPromptingMove() {
         if (blockedGame.get() || isFinishGame() || isBlockedGame()) return;
 
-        Transition promptingTransit = promptingAI.getMove();
-        if (promptingTransit == null) return;
-        promotingMove = promptingTransit.getMove();
+        promptingAI.getMove(transit -> {
+            if (transit == null) return;
+            promotingMove = transit.getMove();
 
-        gameView.clearMoves();
-        Settings.account.setDrawableHintMoves(false);
-        FigureView figureView = gameView.findFigure(promptingTransit.getFigureX(), promptingTransit.getFigureY());
-        gameView.drawChosenFigure(figureView);
-        gameView.drawBlueHint(promptingTransit.getMove());
+            gameView.clearMoves();
+            Settings.account.setDrawableHintMoves(false);
+            FigureView figureView = gameView.findFigure(transit.getFigureX(), transit.getFigureY());
+            gameView.drawChosenFigure(figureView);
+            gameView.drawBlueHint(transit.getMove());
+        });
     }
 
     public String defineUserLevelText(Level level) {

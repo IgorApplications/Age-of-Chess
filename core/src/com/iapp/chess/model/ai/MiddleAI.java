@@ -10,7 +10,7 @@ public class MiddleAI extends AI {
     }
 
     @Override
-    public Transition getMove() {
-        return getMove(DEPTH);
+    public Thread getMove(AIListener aiListener) {
+        return getMove(DEPTH, aiListener);
     }
 }

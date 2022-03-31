@@ -1,5 +1,6 @@
 package com.iapp.chess.model;
 
+import com.badlogic.gdx.Gdx;
 import com.iapp.chess.model.ai.AI;
 import com.iapp.chess.model.ai.AIListener;
 import com.iapp.chess.util.Bool;
@@ -75,6 +76,7 @@ public class Game implements Serializable {
     }
 
     public Color getAIColor() {
+        if (ai == null) return null;
         return ai.getAIColor();
     }
 
@@ -213,30 +215,16 @@ public class Game implements Serializable {
         }
 
         if (lastTransition.getMove().isTakingMove()) {
-            backReadyToTake((Pawn) getFigure(lastTransition.getFigureX(), lastTransition.getFigureY()));
+            backReadyToTake((Pawn) getFigure(lastTransition.getFigureX(), lastTransition.getFigureY()), lastTransition.getMove().getTakenFigure());
         }
     }
 
     public Thread makeMoveAI(AIListener aiListener) {
-        Runnable task = () -> {
-            synchronized (Settings.MUTEX) {
-                if (ai != null && ((ai.getAIColor() == Color.BLACK && colorMove == Color.BLACK) || (ai.getAIColor() == Color.WHITE && colorMove == Color.WHITE))) {
-                    Transition moveAI = ai.getMove();
-                    if (moveAI == null) return;
+        if (ai == null || ai.getAIColor() != colorMove) {
+            throw new RuntimeException("Iapp: AI move not possible");
+        }
 
-                    move(moveAI);
-
-                    if (!Thread.currentThread().isInterrupted()) aiListener.finishMove(new Transition(this, moveAI.getFigureX(), moveAI.getFigureY(), moveAI.getMove()));
-                } else {
-                    if (!Thread.currentThread().isInterrupted()) aiListener.finishMove(null);
-                }
-            }
-        };
-
-        Thread threadAI = new Thread(task);
-        threadAI.start();
-
-        return threadAI;
+        return ai.getMove(aiListener);
     }
     public boolean isFiguresHaveNotMoves() {
         for (Figure figure : getGameFigures()) {
@@ -253,10 +241,7 @@ public class Game implements Serializable {
     public List<Move> getMoves(int x, int y) {
         Figure figure = game[y][x];
 
-        // TODO
-        synchronized (Settings.MUTEX) {
-            if (colorMove != figure.getColor()) return new ArrayList<>();
-        }
+        if (colorMove != figure.getColor()) return new ArrayList<>();
 
         List<Move> moves;
 
@@ -533,18 +518,10 @@ public class Game implements Serializable {
         }
     }
 
-    private void backReadyToTake(Pawn pawn) {
-        int positX = pawn.getX() + 1;
-        int negatX = pawn.getX() - 1;
-
-
-        Figure figure1 = getFigure(pawn.getX() - 1, pawn.getY());
-        if (negatX != -1 && !(figure1 instanceof Cage) && figure1.getColor() != pawn.getColor()) {
+    private void backReadyToTake(Pawn pawn, Figure takenFigure) {
+        if (takenFigure.getX() < pawn.getX()) {
             readyTakeLeft.put(pawn, true);
-        }
-
-        Figure figure2 = getFigure(pawn.getX() + 1, pawn.getY());
-        if (positX != 8 && !(figure2 instanceof Cage) && figure2.getColor() != pawn.getColor()) {
+        } else {
             readyTakeRight.put(pawn, true);
         }
     }

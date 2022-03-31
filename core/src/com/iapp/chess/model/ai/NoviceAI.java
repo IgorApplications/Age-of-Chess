@@ -9,14 +9,14 @@ import java.util.TreeSet;
 
 public class NoviceAI extends AI {
 
-    private int DEPTH = 1;
+    private final int DEPTH = 1;
 
     public NoviceAI(Color color) {
         super(color);
     }
 
     @Override
-    public Transition getMove() {
-        return getMove(DEPTH);
+    public Thread getMove(AIListener aiListener) {
+        return getMove(DEPTH, aiListener);
     }
 }

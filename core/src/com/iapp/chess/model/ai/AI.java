@@ -1,6 +1,7 @@
 package com.iapp.chess.model.ai;
 
 import com.iapp.chess.model.*;
+import com.iapp.chess.util.Settings;
 
 import java.io.*;
 import java.util.*;
@@ -113,42 +114,58 @@ public abstract class AI implements Serializable {
 
     public Color getAIColor() { return aiColor; }
 
-    public Transition getMove(int depth) {
+    public Thread getMove(int depth, AIListener aiListener) {
         cloneGame();
 
-        int bestMove = Integer.MIN_VALUE;
-        Transition virtualAIMove = null;
+        Runnable task = () -> {
+            synchronized (Settings.MUTEX) {
+                try {
+                    int bestMove = Integer.MIN_VALUE;
+                    Transition virtualAIMove = null;
 
-        for (Transition transition : getAllTransitions(aiColor)) {
+                    for (Transition transition : getAllTransitions(aiColor)) {
 
-            move(transition);
-            int value;
-            try {
-                value = getMiniMax(depth - 1, -10_000, 10_000, userColor);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-                return null;
+                        if (Thread.currentThread().isInterrupted()) return;
+
+                        move(transition);
+                        int value;
+
+                        try {
+                            value = getMiniMax(depth - 1, -10_000, 10_000, userColor);
+                        } catch (InterruptedException e) {
+                            System.out.println("debug: aiThread is interrupted");
+                            aiListener.finishMove(null);
+                            return;
+                        }
+                        backMove();
+
+                        if (value >= bestMove) {
+                            bestMove = value;
+                            virtualAIMove = transition;
+                        }
+                    }
+
+                    Figure figure = game.getFigure(virtualAIMove.getFigureX(), virtualAIMove.getFigureY());
+                    Transition transition = new Transition(game, figure.getX(), figure.getY(), virtualAIMove.getMove());
+
+                    if (transition.isCastlingMove()) {
+                        transition.setCastlingMove(transition.getLastRookX(), transition.getLastRookY(), transition.getRookX());
+                    }
+                    if (transition.isUpdatedPawnMove()) {
+                        Figure updatedPawn = game.getFigure(transition.getUpdatedPawn().getX(), transition.getUpdatedPawn().getY());
+                        transition.setUpdatedPawn(updatedPawn);
+                    }
+
+                    aiListener.finishMove(transition);
+                } catch (RuntimeException e) {
+                    System.err.println("AI move failure, should be caused by thread interruption ->");
+                }
             }
-            backMove();
+        };
+        Thread aiThread = new Thread(task);
+        aiThread.start();
 
-            if (value >= bestMove) {
-                bestMove = value;
-                virtualAIMove = transition;
-            }
-        }
-
-        Figure figure = game.getFigure(virtualAIMove.getFigureX(), virtualAIMove.getFigureY());
-        Transition transition = new Transition(game, figure.getX(), figure.getY(), virtualAIMove.getMove());
-
-        if (transition.isCastlingMove()) {
-            transition.setCastlingMove(transition.getLastRookX(), transition.getLastRookY(), transition.getRookX());
-        }
-        if (transition.isUpdatedPawnMove()) {
-            Figure updatedPawn = game.getFigure(transition.getUpdatedPawn().getX(), transition.getUpdatedPawn().getY());
-            transition.setUpdatedPawn(updatedPawn);
-        }
-
-        return transition;
+        return aiThread;
     }
     private float[][] reverseMatrix(float[][] matrix) {
         float[][] reverseMatrix = new float[matrix.length][matrix[0].length];
@@ -254,7 +271,7 @@ public abstract class AI implements Serializable {
         return transitions;
     }
 
-    public abstract Transition getMove();
+    public abstract Thread getMove(AIListener aiListener);
 
     /**
      * @return Transition of a random move and a random figure

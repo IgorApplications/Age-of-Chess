@@ -59,7 +59,7 @@ public class Account implements Serializable {
         if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
             type = Orientation.Type.HORIZONTAL;
 
-            int value = Gdx.graphics.getDisplayMode().height - 70;
+            int value = Gdx.graphics.getDisplayMode().height - 160;
             int key = (int) Math.round(value * 1.8);
 
             windowSize = new Pair<>(key, value);

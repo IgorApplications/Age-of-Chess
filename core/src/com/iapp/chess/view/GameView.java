@@ -192,15 +192,10 @@ public class GameView implements Screen {
         if (chosenFigure != null && !Settings.controller.isBlockedGame()) chosenFigure.showMoves();
         if (Gdx.input.isTouched() && !Settings.controller.isBlockedGame()) processingTouchFigures();
 
-        Runnable task2 = () -> {
-            synchronized (Settings.MUTEX) {
-                long turn = Settings.controller.getTurn();
-                if (turn != -1) {
-                    countMoves.setText(turn + ". " + Settings.controller.defineColorMove());
-                }
-            }
-        };
-        Settings.gdxGame.execute(task2);
+        long turn = Settings.controller.getTurn();
+        if (turn != -1) {
+            countMoves.setText(turn + ". " + Settings.controller.defineColorMove());
+        }
 
         if (Settings.controller.isAIMakesMove()) {
             aiMove.setText(Text.MOVE_AI);

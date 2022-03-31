@@ -12,7 +12,7 @@ public class MasterAI extends AI {
     }
 
     @Override
-    public Transition getMove() {
-       return getMove(DEPTH);
+    public Thread getMove(AIListener aiListener) {
+        return getMove(DEPTH, aiListener);
     }
 }
