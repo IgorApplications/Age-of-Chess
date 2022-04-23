@@ -61,6 +61,10 @@ public class ScoreBoard extends Stage {
         coins.setText(coinsText);
     }
 
+    public void setUserLevel(String text) {
+        userLevel.setText(text);
+    }
+
     private void initLabels() {
         coins = new Label(coinsText, Settings.gdxGame.getLabelSkin());
         coins.setFontScale(0.5f);

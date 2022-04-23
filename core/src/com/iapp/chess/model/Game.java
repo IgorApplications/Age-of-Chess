@@ -1,619 +1,580 @@
 package com.iapp.chess.model;
 
-import com.badlogic.gdx.Gdx;
-import com.iapp.chess.model.ai.AI;
-import com.iapp.chess.model.ai.AIListener;
-import com.iapp.chess.util.Bool;
-import com.iapp.chess.util.Settings;
+import com.badlogic.gdx.utils.Array;
 
-import java.io.*;
+import java.io.Serializable;
 import java.util.*;
 
 public class Game implements Serializable {
 
-    private static final long serialVersionUID = 1L;
-    /**
-     * do not use figure != CAGE as the link will be different when you restart the program.
-     * use !(figure instanceof Cage)
-     * */
-    private static final Cage CAGE = Cage.getInstance();
+    private final boolean[] pawns = {false, false, false, false, false, true, false, false, false, false, false, true, false, false, false, false, false};
+    private final boolean[] rooks = {false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false, false};
+    private final boolean[] knights = {false, false, false, true, false, false, false, false, false, false, false, false, false, true, false, false, false};
+    private final boolean[] bishops = {false, false, true, false, false, false, false, false, false, false, false, false, false, false, true, false, false};
+    private final boolean[] queens = {false, true, false, false, false, false, false, false, false, false, false, false, false, false, false, true, false};
+    private final boolean[] kings = {true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true};
+    private final boolean[] cages = {false, false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false};
 
-    private Figure[][] game;
-    private final LinkedList<Transition> transitions = new LinkedList<>();
-    private volatile Color colorMove;
-    private final Color upperColor;
-    private final Color lowerColor;
-    private AI ai;
-    // turn = 1
-    private long move = 0;
+    private Color upper;
+    private Color lower;
 
-    public Game(AI ai) {
-        if (ai != null) {
-            this.ai = ai;
-            ai.setGame(this);
-            upperColor = ai.getAIColor();
-        } else {
-            upperColor = Color.BLACK;
-        }
-        lowerColor = reverseColor(upperColor);
-        colorMove = Color.WHITE;
+    private Color colorMove = Color.WHITE;
+    private BoardMatrix current;
+    private final LinkedList<BoardMatrix> matrices;
+    private final MoveUtils moveUtils;
 
-        initBoard(upperColor, lowerColor);
+    public Game(Color upper) {
+        this.upper = upper;
+        lower = reverse(upper);
+
+        current = new BoardMatrix(upper);
+        matrices = new LinkedList<>();
+        moveUtils = new MoveUtils();
     }
 
-    private void initBoard(Color upper, Color lower) {
-        game = new Figure[][]
-                {
-                        {new Rook( this,0, 0, upper, -50), new Knight(this,1, 0, upper, -30), new Bishop(this,2, 0, upper, -30), new Queen(this,3, 0, upper, -90), new King(this,4, 0, upper, -900), new Bishop(this,5, 0, upper, -30), new Knight(this,6, 0, upper, -30), new Rook(this,7, 0, upper, -50)},
-                        {new Pawn(this,0, 1, upper, -10), new Pawn(this,1, 1, upper, -10), new Pawn(this,2, 1, upper, -10), new Pawn(this,3, 1, upper, -10), new Pawn(this,4, 1, upper, -10), new Pawn(this,5, 1, upper, -10), new Pawn(this,6, 1, upper, -10), new Pawn(this,7, 1, upper, -10)},
-                        {CAGE, CAGE, CAGE, CAGE, CAGE, CAGE, CAGE, CAGE},
-                        {CAGE, CAGE, CAGE, CAGE, CAGE, CAGE, CAGE, CAGE},
-                        {CAGE, CAGE, CAGE, CAGE, CAGE, CAGE, CAGE, CAGE},
-                        {CAGE, CAGE, CAGE, CAGE, CAGE, CAGE, CAGE, CAGE},
-                        {new Pawn(this,0, 6, lower, 10), new Pawn(this,1, 6, lower, 10), new Pawn(this,2, 6, lower, 10), new Pawn(this,3, 6, lower, 10), new Pawn(this,4, 6, lower, 10), new Pawn(this,5, 6, lower, 10), new Pawn(this,6, 6, lower, 10), new Pawn(this,7, 6, lower, 10)},
-                        {new Rook(this,0, 7, lower, 50), new Knight(this,1, 7, lower, 30), new Bishop(this,2, 7, lower, 30), new Queen(this,3, 7, lower, 90), new King(this,4, 7, lower, 900), new Bishop(this,5, 7, lower, 30), new Knight(this,6, 7, lower, 30), new Rook(this,7, 7, lower, 50)},
-                };
-
-        if (upper == Color.WHITE) {
-            Figure queen = game[7][3];
-            queen.setX(4);
-
-            Figure king  = game[7][4];
-            king.setX(3);
-
-            game[7][3] = king;
-            game[7][4] = queen;
-
-            queen = game[0][3];
-            queen.setX(4);
-
-            king = game[0][4];
-            king.setX(3);
-
-            game[0][3] = king;
-            game[0][4] = queen;
-        }
+    private Game(Color colorMove, Color upper, Color lower, BoardMatrix current,
+                 LinkedList<BoardMatrix> matrices, MoveUtils moveUtils) {
+        this.colorMove = colorMove;
+        this.upper = upper;
+        this.lower = lower;
+        this.current = current;
+        this.matrices = matrices;
+        this.moveUtils = moveUtils;
     }
 
-    public Color getAIColor() {
-        if (ai == null) return null;
-        return ai.getAIColor();
+    public Color getUpper() {
+        return upper;
     }
 
-    public Color getUpperColor() {
-        return upperColor;
-    }
-
-    public Color getLowerColor() {
-        return lowerColor;
-    }
-
-    public boolean isEmptyTransitions() {
-        return transitions.isEmpty();
+    public Color getLower() {
+        return lower;
     }
 
     public Color getColorMove() {
         return colorMove;
     }
 
-    public void setColorMove(Color colorMove) { this.colorMove = colorMove; }
+    public void updateUpperColor(Color upper) {
+        if (this.upper == upper) return;
 
-    public AI getAI() {
-        return ai;
-    }
-
-    public List<Figure> getGameFigures() {
-        List<Figure> figures = new ArrayList<>();
-        for (Figure[] line : game) {
-            for (Figure figure : line) {
-                if (!(figure instanceof Cage)) {
-                    figures.add(figure);
-                }
-            }
-        }
-        return figures;
-    }
-
-    // turn = move / 2
-    public long getTurn() {
-        return move / 2 + 1;
-    }
-
-    public long getMove() {
-        return move;
-    }
-
-    public void move(Transition transition) {
-        transitions.offer(transition);
-        Figure figure = getFigure(transition.getFigureX(), transition.getFigureY());
-
-        if (figure instanceof Pawn) ((Pawn) figure).setFirstMove(false);
-
-        repositionFigure(figure, transition.getMove());
-
-        reverseColorMove();
-        move++;
-    }
-
-    public Transition backMove() {
-        if (transitions.isEmpty()) return null;
-
-        Transition lastTransition = transitions.getLast();
-        Figure figure = getFigure(lastTransition.getMove());
-        if (figure instanceof Pawn && (lastTransition.getFigureY() == 1 || lastTransition.getFigureY() == 6)) {
-            ((Pawn) figure).setFirstMove(true);
+        this.upper = upper;
+        lower = reverse(upper);
+        if (!matrices.isEmpty()) {
+            colorMove = reverse(colorMove);
         }
 
-        backRepositionFigure();
-        move--;
-
-        return lastTransition;
+        for (BoardMatrix matrix : matrices) {
+            matrix.updateColor(upper);
+        }
+        current.updateColor(upper);
     }
 
-    private void repositionFigure(Figure figure, Move move) {
-        Transition lastTransition = transitions.getLast();
-        int figureX = figure.getX();
-        int figureY = figure.getY();
+    public void makeMove(Move move) {
+        colorMove = reverse(colorMove);
+        matrices.offer(current.cloneMatrix());
 
-        for (Figure checkingFigure : getGameFigures()) {
-            if (checkingFigure instanceof Pawn) {
-                checkTakeOnPassMoves((Pawn) checkingFigure);
-            }
+        if (isTakeOnPass(move)) {
+            current.setCage(move.getMoveX(), move.getFigureY());
         }
 
-        if (getCastlingMoves(figure).contains(move)) {
-            performCastle(figureX, figureY, move);
-        } else {
-            game[move.getY()][move.getX()] = figure;
-            game[figureY][figureX] = CAGE;
-            figure.setX(move.getX());
-            figure.setY(move.getY());
-        }
-
-        if (ai != null && ai.getAIColor() == colorMove && game[move.getY()][move.getX()] instanceof Pawn &&
-                (game[move.getY()][move.getX()].getY() == 0 || game[move.getY()][move.getX()].getY() == 7)) {
-            lastTransition.setUpdatedPawn(figure);
-
-            if (colorMove == upperColor) {
-                game[figure.getY()][figure.getX()] = new Queen(this, figure.getX(), figure.getY(), figure.getColor(), -50);
+        if (isCastleMove(move)) {
+            if (move.getMoveX() < move.getFigureX()) {
+                current.setFigure(0, move.getFigureY(), move.getMoveX() + 1, move.getFigureY());
+                current.setCage(0, move.getFigureY());
             } else {
-                game[figure.getY()][figure.getX()] = new Queen(this, figure.getX(), figure.getY(), figure.getColor(), 50);
-            }
-        }
-    }
-
-    private void backRepositionFigure() {
-        Transition lastTransition = transitions.removeLast();
-        int moveX = lastTransition.getMoveX(), moveY = lastTransition.getMoveY();
-        int figureX = lastTransition.getFigureX(), figureY = lastTransition.getFigureY();
-
-        Figure moveFigure;
-        if (lastTransition.isUpdatedPawnMove()) moveFigure = lastTransition.getUpdatedPawn();
-        else moveFigure = getFigure(lastTransition.getMove());
-
-        moveFigure.setX(figureX);
-        moveFigure.setY(figureY);
-        game[figureY][figureX] = moveFigure;
-
-        game[moveY][moveX] = lastTransition.getFelledFigure();
-
-        if (lastTransition.isCastlingMove()) {
-            Figure rook = game[lastTransition.getRookY()][lastTransition.getRookX()];
-            game[rook.getY()][rook.getX()] = CAGE;
-            rook.setX(lastTransition.getLastRookX());
-            rook.setY(lastTransition.getLastRookY());
-            game[lastTransition.getLastRookY()][lastTransition.getLastRookX()] = rook;
-        } else if (lastTransition.getMove().isTakingMove()) {
-            Figure takenFigure = lastTransition.getMove().getTakenFigure();
-            game[takenFigure.getY()][takenFigure.getX()] = takenFigure;
-        }
-
-        for (Figure checkingFigure : getGameFigures()) {
-            if (checkingFigure instanceof Pawn) {
-                checkTakeOnPassMoves((Pawn) checkingFigure);
+                current.setFigure(7, move.getFigureY(), move.getMoveX() - 1, move.getFigureY());
+                current.setCage(7, move.getFigureY());
             }
         }
 
-        if (lastTransition.getMove().isTakingMove()) {
-            backReadyToTake((Pawn) getFigure(lastTransition.getFigureX(), lastTransition.getFigureY()), lastTransition.getMove().getTakenFigure());
-        }
+        current.setFigure(move.getFigureX(), move.getFigureY(), move.getMoveX(), move.getMoveY());
+        current.setCage(move.getFigureX(),move.getFigureY());
     }
 
-    public Thread makeMoveAI(AIListener aiListener) {
-        if (ai == null || ai.getAIColor() != colorMove) {
-            throw new RuntimeException("Iapp: AI move not possible");
-        }
+    public Array<Move> getMoves(int x, int y) {
+        Array<Move> moves = getFigureMoves(x, y);
 
-        return ai.getMove(aiListener);
-    }
-    public boolean isFiguresHaveNotMoves() {
-        for (Figure figure : getGameFigures()) {
-            if (!getMoves(figure.getX(), figure.getY()).isEmpty())
-                return false;
+        byte[] position = getKingPosition(colorMove);
+        if (isCheckKing(position[0], position[1]) || isKing(position[0], position[1])) {
+            return getMovesToSaveKing(moves);
         }
-        return true;
+        return moves;
     }
 
-    public List<Move> getMoves(Figure figure) {
-        return getMoves(figure.getX(), figure.getY());
-    }
+    private Array<Move> getFigureMoves(int x, int y) {
+        if (getColor(x, y) != colorMove) return new Array<>(0);
 
-    public List<Move> getMoves(int x, int y) {
-        Figure figure = game[y][x];
+        Array<Move> moves;
+        if (isPawn(x, y)) {
+            moves = getPawnMoves(x, y);
+        }
+        else if (isRook(x, y)) {
+            moves = getRookMoves(x, y);
+        }
+        else if (isKnight(x, y)) {
+            moves = getKnightMoves(x, y);
+        }
+        else if (isBishop(x, y)) {
+            moves =  getBishopMoves(x, y);
+        }
+        else if (isQueen(x, y)) {
+            moves = getQueenMoves(x, y);
+        }
+        else if (isKing(x, y)) {
+            moves = getKingMoves(x, y);
 
-        if (colorMove != figure.getColor()) return new ArrayList<>();
-
-        List<Move> moves;
-
-        boolean kingIsCheck = isCheckKing(game[y][x].getColor());
-
-        if (kingIsCheck && game[y][x] instanceof King) moves = game[y][x].getMoves();
-        else if (kingIsCheck) moves = getMovesSaveKing(x, y);
-        else moves = figure.getMoves();
-
-        moves.addAll(getCastlingMoves(figure));
-        if (figure instanceof Pawn) {
-            moves.addAll(getTakeOnPassMoves((Pawn) figure));
+            if (!isCheckKing(x, y)) {
+                moves.addAll(getCastleMoves(x, y));
+            }
+        }
+        else {
+            moves = new Array<>(0);
         }
 
-        List<Move> notCheckMoves = new ArrayList<>();
-        for (Move move : moves) {
-            if (isNotCheckMove(x, y, move))
-                notCheckMoves.add(move);
-        }
-
-        return notCheckMoves;
+        return moves;
     }
 
-    public List<Figure> getActiveFigures(Color color) {
-        List<Figure> activeFigures = new ArrayList<>();
-        for (Figure figure : getGameFigures()) {
-            if (!getMoves(figure).isEmpty() && figure.getColor() == color)
-                activeFigures.add(figure);
-        }
-        return activeFigures;
+    public byte[][] getMatrix() {
+        return current.getMatrix();
     }
 
-    public boolean isCutDownMove(Move move) { return !(getFigure(move) instanceof Cage); }
+    public byte[][] getLastMatrix(int depth) {
+        return matrices.get(matrices.size() - depth).getMatrix();
+    }
 
-    public Figure getFigure(Transition transition) { return getFigure(transition.getFigureX(), transition.getFigureY()); }
+    public boolean isPawn(int x, int y) {
+        return pawns[current.getFigure(x, y) + 8];
+    }
 
-    public Figure getFigure(Move move) { return getFigure(move.getX(), move.getY()); }
+    public boolean isRook(int x, int y) {
+        return rooks[(current.getFigure(x, y)) + 8];
+    }
 
-    public Figure getFigure(int x, int y) { return game[y][x]; }
+    public boolean isKnight(int x, int y) {
+        return knights[current.getFigure(x, y) + 8];
+    }
 
-    public boolean isCheckKing(Color color) {
-        if (color == null) throw new RuntimeException("Iapp: color can't be null");
-        List<Figure> figures = getGameFigures();
-        King king = getKingForColor(color);
+    public boolean isBishop(int x, int y) {
+        return bishops[current.getFigure(x, y) + 8];
+    }
 
-        for (Figure figure : figures) {
+    public boolean isQueen(int x, int y) {
+        return queens[current.getFigure(x, y) + 8];
+    }
 
-            if (figure.getColor() != color) {
+    public boolean isKing(int x, int y) {
+        return kings[current.getFigure(x, y) + 8];
+    }
 
-                if (figure instanceof Pawn) {
+    public boolean isCage(int x, int y) {
+        return cages[current.getFigure(x, y) + 8];
+    }
 
-                    Pawn pawn = (Pawn) figure;
-                    for (Move move : pawn.getCutDownFakeMoves()) {
-                        if (move.getX() == king.getX() && move.getY() == king.getY()) {
-                            return true;
-                        }
-                    }
-                } else if (figure instanceof King) {
-                    King enemyKing = (King) figure;
+    public Color getColor(int x, int y) {
+        if (current.getFigure(x, y) < -2) return Color.WHITE;
+        else if (current.getFigure(x, y) > 2) return Color.BLACK;
+        return null;
+    }
 
-                    for (Move move : enemyKing.getNoSafeMoves()) {
-                        if (move.getX() == king.getX() && move.getY() == king.getY())
-                            return true;
-                    }
+    public int getTurn() {
+        return matrices.size() / 2 + 1;
+    }
+
+    public int getMove() {
+        return matrices.size();
+    }
+
+    public byte getId(int x, int y) {
+        return current.getId(x, y);
+    }
+
+    public void cancelMove() {
+        if (matrices.isEmpty()) return;
+
+        current = matrices.removeLast();
+        colorMove = reverse(colorMove);
+    }
+
+    public boolean isUpdated(Move move) {
+        return isPawn(move.getFigureX(), move.getFigureY()) && (move.getMoveY() == 0 || move.getMoveY() == 7);
+    }
+
+    public void updatePawn(int pawnX, int pawnY, byte type) {
+        int sign = current.getFigure(pawnX, pawnY) > 0 ? 1 : -1;
+        current.setFigure(pawnX, pawnY, (byte) (type * sign));
+    }
+
+    public Color getColorCheckKing() {
+        byte[][] matrix = current.getMatrix();
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix[i].length; j++) {
+                if (isCheckKing(j, i)) {
+                    return getColor(j, i);
+                }
+            }
+        }
+        return null;
+    }
+
+    public boolean isCheckKing(int kingX, int kingY) {
+        if (!isKing(kingX, kingY)) return false;
+        byte[][] matrix = getMatrix();
+
+        Color saved = colorMove;
+        colorMove = reverse(getColor(kingX, kingY));
+
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix[i].length; j++) {
+                Array<Move> moves;
+
+                if (isKing(j, i)) {
+                    moves = getKingMoves(j, i);
                 } else {
-                    for (Move move : figure.getMoves()) {
-                        if (move.getX() == king.getX() && move.getY() == king.getY())
-                            return true;
+                    moves = getFigureMoves(j, i);
+                }
+
+                for (Move move : moves) {
+                    if (move.getMoveX() == kingX && move.getMoveY() == kingY) {
+                        colorMove = saved;
+                        return true;
                     }
                 }
             }
         }
 
+        colorMove = saved;
         return false;
     }
 
-    public King getKingForColor(Color colorKing) {
-        List<Figure> figures = getGameFigures();
+    public boolean isFinish() {
+        byte[][] matrix = current.getMatrix();
 
-        King king = null;
+        int count = 0;
+        boolean finish = true;
 
-        for (Figure figure : figures) {
-            if (figure instanceof King && figure.getColor() == colorKing) {
-                king = (King) figure;
-                break;
-            }
-        }
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix[i].length; j++) {
+                if (!isCage(j, i)) count++;
 
-        if (king == null) throw new RuntimeException("Iapp: king is null in current game");
-
-        return king;
-    }
-
-    public void updatePawn(int pawnX, int pawnY, Figure updateFigure) {
-        Pawn pawn = (Pawn) getFigure(pawnX, pawnY);
-        transitions.getLast().setUpdatedPawn(pawn);
-        game[updateFigure.getY()][updateFigure.getX()] = updateFigure;
-    }
-
-    boolean isSafeMoveKing(int x, int y, King king, Color enemyColor) {
-        List<Figure> figures = getGameFigures();
-
-        for (Figure figure : figures) {
-            if (figure.getColor() == enemyColor) {
-                if (figure instanceof Pawn) {
-                    Pawn pawn = (Pawn) figure;
-                    for (Move move : pawn.getCutDownFakeMoves()) {
-                        if (move.getX() == x && move.getY() == y) {
-                            return false;
-                        }
-                    }
-                } else if (figure instanceof King) {
-                    King enemyKing = (King) figure;
-                    for (Move move : enemyKing.getNoSafeMoves()) {
-                        if (move.getX() == x && move.getY() == y) {
-                            return false;
-                        }
-                    }
-                } else {
-                    for (Move move : figure.getMoves()) {
-                        if (move.getX() == x && move.getY() == y) {
-                            return false;
-                        }
-                    }
+                if (!getMoves(j, i).isEmpty()) {
+                    finish = false;
                 }
             }
         }
 
-        int lastX = king.getX();
-        int lastY = king.getY();
-
-        Figure saveFigure = game[y][x];
-        game[y][x] = king;
-        game[lastY][lastX] = CAGE;
-
-        king.setX(x);
-        king.setY(y);
-
-        boolean res = isCheckKing(king.getColor());
-
-        game[y][x] = saveFigure;
-        game[lastY][lastX] = king;
-
-        king.setX(lastX);
-        king.setY(lastY);
-
-        return !res;
+        return finish || count == 2;
     }
 
-    private boolean isNotCheckMove(int x, int y, Move move) {
-        Figure figure = game[y][x];
-        Figure saveFigure = game[move.getY()][move.getX()];
-        boolean isNotCheckMove = true;
-
-        game[y][x] = CAGE;
-        game[move.getY()][move.getX()] = figure;
-        figure.setX(move.getX());
-        figure.setY(move.getY());
-
-        if (isCheckKing(figure.getColor())) isNotCheckMove = false;
-
-        game[y][x] = figure;
-        game[move.getY()][move.getX()] = saveFigure;
-        figure.setX(x);
-        figure.setY(y);
-
-        return isNotCheckMove;
+    public boolean isCastleMove(Move move) {
+        return getCastleMoves(move.getFigureX(), move.getFigureY()).contains(move, false);
     }
 
-    private List<Move> getMovesSaveKing(int x, int y) {
-        List<Move> movesSaveKing = new ArrayList<>();
-
-        for (Move move : game[y][x].getMoves()) {
-            Figure saveFigure = game[move.getY()][move.getX()];
-            game[move.getY()][move.getX()] = game[y][x];
-            game[y][x] = CAGE;
-
-            if (!isCheckKing(game[move.getY()][move.getX()].getColor()))
-                movesSaveKing.add(move);
-
-            game[y][x] = game[move.getY()][move.getX()];
-            game[move.getY()][move.getX()] = saveFigure;
+    public Game cloneGame() {
+        LinkedList<BoardMatrix> cloneMatrices = new LinkedList<>();
+        for (BoardMatrix boardMatrix : matrices) {
+            cloneMatrices.add(boardMatrix.cloneMatrix());
         }
 
-        return movesSaveKing;
+        return new Game(colorMove, upper, lower, current.cloneMatrix(), cloneMatrices, moveUtils);
     }
 
-    private List<Move> getCastlingMoves(Figure self) {
-        List<Move> castlingMoves = new ArrayList<>();
-        if (!(self instanceof King)) return castlingMoves;
-
-        if (isCastlingPossible(self.getColor(), 7, TypeCastling.LEFT)) {
-            Move castlingMove = new Move(2, 7);
-            castlingMove.setCastlingMove(true);
-            castlingMoves.add(castlingMove);
-        }
-
-        if (isCastlingPossible(self.getColor(), 7, TypeCastling.RIGHT)) {
-            Move castlingMove = new Move(6, 7);
-            castlingMove.setCastlingMove(true);
-            castlingMoves.add(castlingMove);
-        }
-
-        if (isCastlingPossible(self.getColor(), 0, TypeCastling.LEFT)) {
-            Move castlingMove = new Move(2, 0);
-            castlingMove.setCastlingMove(true);
-            castlingMoves.add(castlingMove);
-        }
-
-        if (isCastlingPossible(self.getColor(), 0, TypeCastling.RIGHT)) {
-            Move castlingMove = new Move(6, 0);
-            castlingMove.setCastlingMove(true);
-            castlingMoves.add(castlingMove);
-        }
-
-        return castlingMoves;
+    public Color reverse(Color first) {
+        return first == Color.BLACK ? Color.WHITE : Color.BLACK;
     }
 
-    private boolean isCastlingPossible(Color kingColor, int y, TypeCastling typeCastling) {
-        if (isCheckKing(kingColor)) return false;
+    private Array<Move> getQueenMoves(int x, int y) {
+        Array<Move> queenMoves = getRookMoves(x, y);
+        queenMoves.addAll(getBishopMoves(x, y));
 
-        boolean castlingPossible = game[y][typeCastling.rookX] instanceof Rook && game[y][typeCastling.kingX] instanceof King;
-        for (int x : typeCastling.cageX) {
-            castlingPossible = castlingPossible && game[y][x] instanceof Cage;
-        }
-        return castlingPossible;
+        return queenMoves;
     }
 
-    private final Map<Pawn, Boolean> readyTakeLeft = new HashMap<>();
-    private final Map<Pawn, Boolean> readyTakeRight = new HashMap<>();
+    private Array<Move> getKnightMoves(int x, int y) {
+        Array<Move> knightMoves = new Array<>();
 
-    private void checkTakeOnPassMoves(Pawn pawn) {
-        if (pawn.getColor() == upperColor && pawn.getY() == 4) {
-            addReadyToTake(pawn);
-        }
+        addValidKnightMove(knightMoves, x, y, x + 1, y + 2);
+        addValidKnightMove(knightMoves, x, y, x - 1, y + 2);
 
-        if (pawn.getColor() == lowerColor && pawn.getY() == 3) {
-            addReadyToTake(pawn);
+        addValidKnightMove(knightMoves, x, y, x + 1, y - 2);
+        addValidKnightMove(knightMoves, x, y, x - 1, y - 2);
+
+        addValidKnightMove(knightMoves, x, y, x + 2, y + 1);
+        addValidKnightMove(knightMoves, x, y, x + 2, y - 1);
+
+        addValidKnightMove(knightMoves, x, y, x - 2, y + 1);
+        addValidKnightMove(knightMoves, x, y, x - 2, y - 1);
+
+        return knightMoves;
+    }
+
+    private void addValidKnightMove(Array<Move> knightMoves, int x, int y, int moveX, int moveY) {
+        Color color = getColor(moveX, moveY);
+        if ((color != null && color != colorMove) || isCage(moveX, moveY)) {
+            knightMoves.add(moveUtils.getMove(x, y, moveX, moveY));
         }
     }
 
-    private List<Move> getTakeOnPassMoves(Pawn pawn) {
-        List<Move> takeTransitions = new ArrayList<>();
+    private Array<Move> getBishopMoves(int x, int y) {
+        Array<Move> bishopMoves = new Array<>();
+        int j = x + 1, i = y + 1;
 
-        addTakingMove(pawn, takeTransitions, readyTakeLeft, -1);
-        addTakingMove(pawn, takeTransitions, readyTakeRight, 1);
+        while (j < 8 && i < 8) {
+            if (getColor(j, i) != colorMove) {
+                bishopMoves.add(moveUtils.getMove(x, y, j, i));
+            }
 
-        return takeTransitions;
+            if (!isCage(j, i)) break;
+
+            j++;
+            i++;
+        }
+
+        j = x + 1;
+        i = y - 1;
+        while (j < 8 && i >= 0) {
+            if (getColor(j, i) != colorMove) {
+                bishopMoves.add(moveUtils.getMove(x, y, j, i));
+            }
+
+            if (!isCage(j, i)) break;
+
+            j++;
+            i--;
+        }
+
+        j = x - 1;
+        i = y + 1;
+        while (j >= 0 && i < 8) {
+            if (getColor(j, i) != colorMove) {
+                bishopMoves.add(moveUtils.getMove(x, y, j, i));
+            }
+
+            if (!isCage(j, i)) break;
+
+            j--;
+            i++;
+        }
+
+        j = x - 1;
+        i = y - 1;
+        while (j >= 0 && i >= 0 ) {
+            if (getColor(j, i) != colorMove) {
+                bishopMoves.add(moveUtils.getMove(x, y, j, i));
+            }
+
+            if (!isCage(j, i)) break;
+
+            j--;
+            i--;
+        }
+
+        return bishopMoves;
     }
 
-    public void addTakingMove(Pawn pawn, List<Move> takeTransitions, Map<Pawn, Boolean> ready, int transitionX) {
-        if (ready.containsKey(pawn) && ready.get(pawn) && !(game[pawn.getY()][pawn.getX() + transitionX] instanceof Cage)) {
+    private Array<Move> getRookMoves(int x, int y) {
+        Array<Move> rookMoves = new Array<>();
 
-            Move move = new Move(pawn.getX() + transitionX, (pawn.getY() == 4 ? 5 : 2));
-            move.setTakeOnPass(getFigure(pawn.getX() + transitionX, pawn.getY()));
-            takeTransitions.add(move);
+        for (int i = y - 1; i >= 0; i--) {
+            if (getColor(x, i) != colorMove) {
+                rookMoves.add(moveUtils.getMove(x, y, x, i));
+            }
+
+            if (!isCage(x, i)) break;
+        }
+
+        for (int i = y + 1; i < 8; i++) {
+            if (getColor(x, i) != colorMove) {
+                rookMoves.add(moveUtils.getMove(x, y, x, i));
+            }
+
+            if (!isCage(x, i)) break;
+        }
+
+        for (int i = x - 1; i >= 0; i--) {
+            if (getColor(i, y) != colorMove) {
+                rookMoves.add(moveUtils.getMove(x, y, i, y));
+            }
+
+            if (!isCage(i, y)) break;
+        }
+
+        for (int i = x + 1; i < 8; i++) {
+            if (getColor(i, y) != colorMove) {
+                rookMoves.add(moveUtils.getMove(x, y, i, y));
+            }
+
+            if (!isCage(i, y)) break;
+        }
+
+        return rookMoves;
+    }
+
+    private Array<Move> getKingMoves(int x, int y) {
+        Array<Move> kingMoves = new Array<>();
+        int sign = colorMove == Color.BLACK ? -1 : 1;
+
+        addKingMove(kingMoves, x, y, x - 1, y, sign);
+        addKingMove(kingMoves, x, y, x - 1, y - 1, sign);
+        addKingMove(kingMoves, x, y, x, y - 1, sign);
+        addKingMove(kingMoves, x, y, x + 1, y - 1, sign);
+        addKingMove(kingMoves, x, y, x + 1, y, sign);
+        addKingMove(kingMoves, x, y, x + 1, y + 1, sign);
+        addKingMove(kingMoves, x, y, x, y + 1, sign);
+        addKingMove(kingMoves, x, y, x - 1, y + 1, sign);
+
+        return kingMoves;
+    }
+
+    private Array<Move> getPawnMoves(int x, int y) {
+        Array<Move> pawnMoves = new Array<>();
+
+        int direction = isUpperColor(x, y) ? 1 : -1;
+        Color figureColor = getColor(x, y);
+
+        if (current.getFigure(x,y + direction) == BoardMatrix.CAGE) {
+            pawnMoves.add(moveUtils.getMove(x, y, x, y + direction));
+
+            if ((y == 1 || y == 6) && current.getFigure(x,y + direction * 2) == BoardMatrix.CAGE) {
+                pawnMoves.add(moveUtils.getMove(x, y, x, y + direction * 2));
+            }
+        }
+
+        Color left = getColor(x - 1, y + direction);
+        if (left != null && left != colorMove) {
+            pawnMoves.add(moveUtils.getMove(x, y, x - 1, y + direction));
+        }
+
+        Color right = getColor(x + 1, y + direction);
+        if (right != null && right != colorMove) {
+            pawnMoves.add(moveUtils.getMove(x, y, x + 1, y + direction));
+        }
+
+        if (((y == 3 && figureColor == lower) || (y == 4 && figureColor == upper))
+                && ((getColor(x - 1, y)) != colorMove && getColor(x + 1, y) != colorMove)) {
+
+            Move move = findChange();
+
+            if ((move.getFigureY() + -direction * 2) == move.getMoveY()) {
+
+                if (x - 1 == move.getMoveX() && y == move.getMoveY()) {
+                    pawnMoves.add(moveUtils.getMove(x, y, x - 1, y + direction));
+                }
+
+                if (x + 1 == move.getMoveX() && y == move.getMoveY()) {
+                    pawnMoves.add(moveUtils.getMove(x, y, x + 1, y + direction));
+                }
+            }
+        }
+
+        return pawnMoves;
+    }
+
+    private byte[] getKingPosition(Color color) {
+        byte[][] matrix = current.getMatrix();
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix[i].length; j++) {
+                if (isKing(j, i) && getColor(j, i) == color) {
+                    return new byte[]{(byte) j, (byte) i};
+                }
+            }
+        }
+        return new byte[]{-1, -1};
+    }
+
+    private void addKingMove(Array<Move> moves, int figureX, int figureY, int x, int y, int sign) {
+        if (current.getFigure(x, y) * sign >= 1 || current.getFigure(x, y) == BoardMatrix.CAGE) {
+            moves.add(moveUtils.getMove(figureX, figureY, x, y));
         }
     }
 
-    private void addReadyToTake(Pawn pawn) {
-        int positX = pawn.getX() + 1;
-        int negatX = pawn.getX() - 1;
+    private Array<Move> getCastleMoves(int figureX, int figureY) {
+        if (!isKing(figureX, figureY)) return new Array<>(0);
 
-        if (negatX != -1 && getFigure(pawn.getX() - 1, pawn.getY()) instanceof Cage) {
-            readyTakeLeft.put(pawn, true);
-        } else {
-            readyTakeLeft.put(pawn, false);
+        Color kingColor = getColor(figureX, figureY);
+        Array<Move> checkMoves = new Array<>();
+
+        if ((kingColor == upper && figureY == 0) || (kingColor == lower && figureY == 7)) {
+            if (figureX == 3) {
+                if (checkTreePosition(figureX, figureY, -1)) {
+                    checkMoves.add(moveUtils.getMove(figureX, figureY, figureX - 2, figureY));
+                }
+
+                if (checkFourPosition(figureX, figureY, 1)) {
+                    checkMoves.add(moveUtils.getMove(figureX, figureY, figureX + 2, figureY));
+                }
+            } else if (figureX == 4) {
+                if (checkFourPosition(figureX, figureY, -1)) {
+                    checkMoves.add(moveUtils.getMove(figureX, figureY, figureX - 2, figureY));
+                }
+
+                if (checkTreePosition(figureX, figureY, 1)) {
+                    checkMoves.add(moveUtils.getMove(figureX, figureY, figureX + 2, figureY));
+                }
+            }
         }
 
-        if (positX != 8 && getFigure(pawn.getX() + 1, pawn.getY()) instanceof Cage) {
-            readyTakeRight.put(pawn, true);
-        } else {
-            readyTakeRight.put(pawn, false);
+        return checkMoves;
+    }
+
+    private boolean checkFourPosition(int figureX, int figureY, int sign) {
+        if (isCage(figureX + sign, figureY) && isCage(figureX + sign * 2, figureY)
+                && isCage(figureX + sign * 3, figureY) && isRook(figureX + sign * 4, figureY)) {
+            return true;
         }
+        return false;
     }
 
-    private void backReadyToTake(Pawn pawn, Figure takenFigure) {
-        if (takenFigure.getX() < pawn.getX()) {
-            readyTakeLeft.put(pawn, true);
-        } else {
-            readyTakeRight.put(pawn, true);
+    private boolean checkTreePosition(int figureX, int figureY, int sign) {
+        if (isCage(figureX + sign, figureY) && isCage(figureX + sign * 2, figureY)
+                && isRook(figureX + sign * 3, figureY)) {
+            return true;
         }
+        return false;
     }
 
-    public void performTakeOnPass(Move move) {
-        int y = move.getY() == 2 ? 3 : 4;
-        game[y][move.getX()] = CAGE;
-    }
+    private Move findChange() {
+        if (matrices.size() == 1) return moveUtils.getMove(-1, -1, -1, -1);
 
-    private void performCastle(int kingX, int kingY, Move kingMove) {
-        Figure king = game[kingY][kingX];
-        kingMove.setCastlingMove(true);
+        byte[][] current = getMatrix();
+        byte[][] last = getLastMatrix(1);
 
-        game[kingMove.getY()][kingMove.getX()] = king;
-        king.setX(kingMove.getX());
-        game[kingY][kingX] = CAGE;
+        int figureX = -1, figureY = -1, moveX = -1, moveY = -1;
 
-        if (kingMove.getX() > kingX) {
-            game[kingMove.getY()][kingMove.getX() - 1] = game[kingMove.getY()][kingMove.getX() + 1];
-            game[kingMove.getY()][kingMove.getX() + 1] = CAGE;
-
-            Figure rookFigure = game[kingMove.getY()][kingMove.getX() - 1];
-            if (!(rookFigure instanceof Rook)) throw new RuntimeException("When back castling, the figure must be a rook");
-            Rook rook = (Rook) rookFigure;
-
-            transitions.getLast().setCastlingMove(rook.getX(), rook.getY(), kingMove.getX() - 1);
-            rook.setX(kingMove.getX() - 1);
-        } else {
-            game[kingMove.getY()][kingMove.getX() + 1] = game[kingMove.getY()][kingMove.getX() - 2];
-            game[kingMove.getY()][kingMove.getX() - 2] = CAGE;
-
-            Figure rookFigure = game[kingMove.getY()][kingMove.getX() + 1];
-            if (!(rookFigure instanceof Rook)) throw new RuntimeException("When back castling, the figure must be a rook");
-            Rook rook = (Rook) rookFigure;
-
-            transitions.getLast().setCastlingMove(rook.getX(), rook.getY(), kingMove.getX() + 1);
-            rook.setX(kingMove.getX() + 1);
-        }
-    }
-
-    public void reverseColorMove() {
-        if (colorMove == Color.BLACK) colorMove = Color.WHITE;
-        else colorMove = Color.BLACK;
-    }
-
-    private Color reverseColor(Color color) {
-        return color == Color.BLACK ? Color.WHITE : Color.BLACK;
-    }
-
-    private enum TypeCastling {
-        LEFT(0, 4, 1, 2, 3),
-        RIGHT(7, 4, 5, 6);
-
-        final int rookX;
-        final int kingX;
-        final int[] cageX;
-
-        TypeCastling(int rookX, int kingX, int... cageX) {
-            this.rookX = rookX;
-            this.kingX = kingX;
-            this.cageX = cageX;
-        }
-    }
-
-    private void reverseMatrix() {
-        for (int i = game.length - 1; i >= 0; i--) {
-            for (int j = 0; j < game[i].length; j++) {
-                Figure figure = game[i][j];
-                if (!(figure instanceof Cage)) {
-                    if (figure.getColor() == Color.WHITE) {
-                        figure.setColor(Color.BLACK);
+        for (int i = 0; i < current.length; i++) {
+            for (int j = 0; j < current[i].length; j++) {
+                if (current[i][j] != last[i][j]) {
+                    if (!isCage(j, i)) {
+                        moveX = j;
+                        moveY = i;
                     } else {
-                        figure.setColor(Color.WHITE);
+                        figureX = j;
+                        figureY = i;
                     }
                 }
             }
         }
+        return moveUtils.getMove(figureX, figureY, moveX, moveY);
     }
 
-    public Game deepClone() {
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(baos);
-            oos.writeObject(this);
+    private Array<Move> getMovesToSaveKing(Array<Move> moves) {
+        Array<Move> saving = new Array<>();
 
-            ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-            ObjectInputStream ois = new ObjectInputStream(bais);
-            return (Game) ois.readObject();
-        } catch (IOException e) {
-            return null;
-        } catch (ClassNotFoundException e) {
-            return null;
+        for (Move move : moves) {
+            makeMove(move);
+            byte[] position = getKingPosition(reverse(colorMove));
+            if (!isCheckKing(position[0], position[1])) saving.add(move);
+            cancelMove();
         }
+
+        return saving;
+    }
+
+    private boolean isUpperColor(int x, int y) {
+        return getColor(x, y) == upper;
+    }
+
+    private boolean isTakeOnPass(Move move) {
+        if (!isPawn(move.getFigureX(), move.getFigureY())) return false;
+        return move.getMoveX() != move.getFigureX() && isCage(move.getMoveX(), move.getMoveY());
     }
 }

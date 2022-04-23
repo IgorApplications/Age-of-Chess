@@ -83,9 +83,6 @@ public class Orientation {
     public static float blackLineY;
     public static float blackLineHeight;
 
-    public static float moveAIX;
-    public static float moveAIY;
-
     /**
      * DialogView
      * */
@@ -207,9 +204,6 @@ public class Orientation {
 
         blackLineY = Position.BLACK_LINE_Y.getValue(type);
         blackLineHeight = Position.BLACK_LINE_HEIGHT.getValue(type);
-
-        moveAIX = Position.MOVE_AI_X.getValue(type);
-        moveAIY = Position.MOVE_AI_Y.getValue(type);
 
         BoardMatrix.reInit();
     }
@@ -344,9 +338,6 @@ public class Orientation {
 
         BLACK_LINE_HEIGHT(80, 80),
         BLACK_LINE_Y(410, 810),
-
-        MOVE_AI_X(280, 20),
-        MOVE_AI_Y(492, 725),
 
         /**
          * DialogView

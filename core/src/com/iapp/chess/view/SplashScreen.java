@@ -2,7 +2,6 @@ package com.iapp.chess.view;
 
 import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Graphics;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -10,10 +9,9 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.iapp.chess.controller.MenuController;
 import com.iapp.chess.util.Orientation;
 import com.iapp.chess.util.Settings;
-
-import java.awt.*;
 
 public class SplashScreen implements Screen {
 
@@ -89,7 +87,7 @@ public class SplashScreen implements Screen {
                     Settings.orientation.initCamera(Settings.account.getOrientationType());
                 }
 
-                MainView mainView = new MainView();
+                MenuView mainView = new MenuView(new MenuController());
                 Settings.gdxGame.setScreen(mainView);
 
                 dispose();

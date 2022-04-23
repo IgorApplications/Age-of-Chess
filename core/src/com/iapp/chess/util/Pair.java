@@ -7,6 +7,9 @@ public class Pair<K, V> implements Serializable {
     private K key;
     private V value;
 
+    public Pair() {
+    }
+
     public Pair(K k, V v) {
         this.key = k;
         this.value = v;
@@ -26,5 +29,13 @@ public class Pair<K, V> implements Serializable {
 
     public void setValue(V value) {
         this.value = value;
+    }
+
+    public boolean containsKey(K key) {
+        return this.key == key;
+    }
+
+    public boolean containsValue(V value) {
+        return this.value == value;
     }
 }

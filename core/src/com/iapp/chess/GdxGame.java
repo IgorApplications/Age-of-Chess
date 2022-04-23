@@ -3,7 +3,6 @@ package com.iapp.chess;
 import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -16,12 +15,10 @@ import com.badlogic.gdx.scenes.scene2d.actions.SequenceAction;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.utils.Align;
 import com.iapp.chess.controller.Account;
-import com.iapp.chess.controller.Controller;
+import com.iapp.chess.controller.GameController;
 import com.iapp.chess.util.Assets;
 import com.iapp.chess.util.Orientation;
 import com.iapp.chess.util.Settings;
-import com.iapp.chess.view.GameView;
-import com.iapp.chess.view.MainView;
 import com.iapp.chess.view.SplashScreen;
 
 import java.util.concurrent.ExecutorService;
@@ -132,11 +129,10 @@ public class GdxGame extends Game {
 			t.printStackTrace();
 			Settings.LOGGER.log(t);
 		}
-	}
+ 	}
 
 	@Override
 	public void dispose () {
-		Settings.controller.saveGame();
 		Settings.account.saveWindowSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 		Settings.DATA.saveAccount(Settings.account);
 
@@ -148,47 +144,6 @@ public class GdxGame extends Game {
 
 		super.dispose();
 		System.exit(0);
-	}
-
-	public void goToMenu(GameView gameView, boolean saveGame) {
-		Settings.controller.unblockGame();
-		Settings.account.setDrawableHintMoves(true);
-
-		if (saveGame) Settings.controller.saveGame();
-		else Settings.controller.removeSavedGame();
-
-		MainView mainView = new MainView();
-		setScreen(mainView);
-		gameView.dispose();
-	}
-
-	public void goToGame(Screen lastScreen) {
-		Settings.controller.unblockGame();
-		Settings.account.setDrawableHintMoves(true);
-
-		GameView gameView = new GameView();
-		Settings.controller.setGameView(gameView);
-		Settings.controller.resetGame(Settings.account.getChoiceLevel());
-
-		gameView.initGUI(Settings.controller);
-		Settings.gdxGame.setScreen(gameView);
-
-		lastScreen.dispose();
-	}
-
-	public void goToGame(Screen lastScreen, Stage lastStage) {
-		Settings.controller.unblockGame();
-
-		GameView gameView = new GameView();
-		Settings.controller.setGameView(gameView);
-		Settings.controller.resetGame(Settings.account.getChoiceLevel());
-
-		gameView.initGUI(Settings.controller);
-
-		goToScreen(lastStage, Actions.run(() -> {
-				Settings.gdxGame.setScreen(gameView);
-				lastScreen.dispose();
-		}), 0.20f);
 	}
 
 	public void goToScreen(Stage currentStage, RunnableAction intent, float duration) {
@@ -238,7 +193,6 @@ public class GdxGame extends Game {
 		Settings.launcher = launcher;
 		Settings.orientation = new Orientation();
 
-		Settings.controller = new Controller();
 		Settings.account = Settings.DATA.readAccount();
 		if (Settings.account == null) Settings.account = new Account();
 	}

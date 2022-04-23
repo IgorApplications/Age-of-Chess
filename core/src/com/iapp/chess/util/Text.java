@@ -95,6 +95,12 @@ public class Text {
     public static final String USER_EXPERIENCED;
     public static final String USER_MASTER;
 
+    public static final String DEBUG;
+    public static final String AI_PERFORMANCE;
+    public static final String INFO_DELETE_ACCOUNT;
+    public static final String DELETE_ACCOUNT;
+    public static final String DELETE_ACCOUNT_DIALOG;
+
     /**
      * DialogView
      * */
@@ -197,6 +203,12 @@ public class Text {
             USER_EXPERIENCED = "Опытный";
             USER_MASTER = "Мастер";
 
+            DEBUG = "Отлаживание";
+            AI_PERFORMANCE = "Потоки задействованные для ИИ";
+            INFO_DELETE_ACCOUNT = "Очистить данные акканта";
+            DELETE_ACCOUNT = "Удалить акканунт";
+            DELETE_ACCOUNT_DIALOG = "Вы действительно хотите удалить свою учётную запись? Данное действие необратимо.";
+
             GAME_MENU = "Игровое меню";
             REPLAY_TEXT = "Игра прервана. Вы хотите начать текущую игру заново?";
             MENU_TEXT = "Игра прервана. Вы хотите покинуть игру? Выберите режим выхода в меню.";
@@ -289,6 +301,12 @@ public class Text {
             USER_ADVANCED = "Advanced";
             USER_EXPERIENCED = "Experienced";
             USER_MASTER = "Master";
+
+            DEBUG = "Debug";
+            AI_PERFORMANCE = "Threads involved for AI";
+            INFO_DELETE_ACCOUNT = "Clear account data";
+            DELETE_ACCOUNT = "Delete account";
+            DELETE_ACCOUNT_DIALOG = "Are you sure want to delete your account? This action is irreversibly";
 
             GAME_MENU = "Game menu";
             REPLAY_TEXT = "The game has been interrupted. Do you want to restart the current game?";

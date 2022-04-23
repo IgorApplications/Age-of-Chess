@@ -5,8 +5,6 @@ import android.os.Bundle;
 
 import com.badlogic.gdx.backends.android.AndroidApplication;
 import com.badlogic.gdx.backends.android.AndroidApplicationConfiguration;
-import com.badlogic.gdx.scenes.scene2d.ui.Image;
-import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.iapp.chess.util.CallListener;
 
 public class AndroidLauncher extends AndroidApplication implements Launcher {
@@ -36,12 +34,7 @@ public class AndroidLauncher extends AndroidApplication implements Launcher {
 		onFinish = callListener;
 	}
 
-	@Override
-	public int[] getDeviceScreen() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
+    @Override
 	public void finish() {
 		if (onFinish != null) onFinish.call();
 		else super.finish();

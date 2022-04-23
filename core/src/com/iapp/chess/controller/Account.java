@@ -3,9 +3,8 @@ package com.iapp.chess.controller;
 import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.iapp.chess.model.*;
+import com.iapp.chess.model.ai.AI;
 import com.iapp.chess.util.*;
-import com.iapp.chess.view.FigureView;
-import com.iapp.chess.view.GameView;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -20,38 +19,31 @@ public class Account implements Serializable {
     private Pair<Integer, Integer> windowSize;
 
     private Orientation.Type type;
-    private Level userLevel = Level.NOVICE;
+    private Level userLevel = Level.MASTER;
     private Level choiceLevel = Level.NOVICE;
 
-    private Level[] allLevels = Level.values();
-    private Map<Level, Game> savedGames = new HashMap<>();
-    private Map<Level, List<FigureView>> invisibleFigureViews = new HashMap<>();
-    private Map<Level, Integer> turnsByLevel = new HashMap<>();
-    private Map<FigureSet, Pair<Boolean, Boolean>> figureSets = new HashMap<>();
+    private final Level[] allLevels = Level.values();
+    private final Map<Level, Game> savedGames = new HashMap<>();
+    private final Map<Level, Integer> turnsByLevel = new HashMap<>();
+    private final Map<FigureSet, Pair<Boolean, Boolean>> figureSets = new HashMap<>();
 
+    private AI.ThreadsMode threadsMode = AI.ThreadsMode.HALF_THREADS;
     private AIColorMode aiColorMode = AIColorMode.BLACK;
 
-    private volatile transient boolean drawableOutlineFigure = true;
-    private volatile transient boolean drawableOutlineFelledFigure = true;
-    private volatile transient boolean drawableHintMoves = true;
-    private volatile transient boolean drawableHintCastle = true;
-    private volatile transient boolean drawableHintCheck = true;
-    private volatile transient boolean drawableGreenCross = true;
+    private boolean blockedOutlineFigure;
+    private boolean blockedOutlineFelledFigure;
+    private boolean blockedHintMoves;
+    private boolean blockedHintCastle;
+    private boolean blockedHintCheck;
+    private boolean blockedGreenCross;
 
-    private volatile boolean blockedOutlineFigure;
-    private volatile boolean blockedOutlineFelledFigure;
-    private volatile boolean blockedHintMoves;
-    private volatile boolean blockedHintCastle;
-    private volatile boolean blockedHintCheck;
-    private volatile boolean blockedGreenCross;
-
-    private volatile boolean blockedSoundClick;
-    private volatile boolean blockedSoundMove;
-    private volatile boolean blockedSoundCastle;
-    private volatile boolean blockedSoundCheck;
-    private volatile boolean blockedSoundWin;
-    private volatile boolean blockedSoundWinMaster;
-    private volatile boolean blockedSoundLose;
+    private boolean blockedSoundClick;
+    private boolean blockedSoundMove;
+    private boolean blockedSoundCastle;
+    private boolean blockedSoundCheck;
+    private boolean blockedSoundWin;
+    private boolean blockedSoundWinMaster;
+    private boolean blockedSoundLose;
 
     private transient Random random = new Random();
 
@@ -101,57 +93,6 @@ public class Account implements Serializable {
             if (entry.getValue().getValue()) return entry.getKey();
         }
         throw new RuntimeException("Iapp: There is no selected set of figures!");
-    }
-
-    /**
-     * Drawable methods
-     * */
-    public boolean isDrawableOutlineFigure() {
-        return drawableOutlineFigure && !blockedOutlineFigure;
-    }
-
-    public void setDrawableOutlineFigure(boolean drawableOutlineFigure) {
-        this.drawableOutlineFigure = drawableOutlineFigure;
-    }
-
-    public boolean isDrawableOutlineFelledFigure() {
-        return drawableOutlineFelledFigure && !blockedOutlineFelledFigure;
-    }
-
-    public void setDrawableOutlineFelledFigure(boolean drawableOutlineFelledFigure) {
-        this.drawableOutlineFelledFigure = drawableOutlineFelledFigure;
-    }
-
-    public boolean isDrawableHintMoves() {
-        return drawableHintMoves && !blockedHintMoves;
-    }
-
-    public void setDrawableHintMoves(boolean drawableHintMoves) {
-        this.drawableHintMoves = drawableHintMoves;
-    }
-
-    public boolean isDrawableHintCastle() {
-        return drawableHintCastle && !blockedHintCastle;
-    }
-
-    public void setDrawableHintCastle(boolean drawableHintCastle) {
-        this.drawableHintCastle = drawableHintCastle;
-    }
-
-    public boolean isDrawableHintCheck() {
-        return drawableHintCheck && !blockedHintCheck;
-    }
-
-    public void setDrawableHintCheck(boolean drawableHintCheck) {
-        this.drawableHintCheck = drawableHintCheck;
-    }
-
-    public boolean isDrawableGreenCross() {
-        return drawableGreenCross && !blockedGreenCross;
-    }
-
-    public void setDrawableGreenCross(boolean drawableHintGreenCross) {
-        this.drawableGreenCross = drawableHintGreenCross;
     }
 
     /**
@@ -267,6 +208,15 @@ public class Account implements Serializable {
     /**
      * Account methods
      * */
+
+    public void setAIPerformanceMode(AI.ThreadsMode threadsMode) {
+        this.threadsMode = threadsMode;
+    }
+
+    public AI.ThreadsMode getAIPerformanceMode() {
+        return threadsMode;
+    }
+
     public void setSaveWindowSize(boolean saveWindowSize) {
         this.saveWindowSize = saveWindowSize;
     }
@@ -388,55 +338,19 @@ public class Account implements Serializable {
         return turnsByLevel.get(level);
     }
 
-    void saveGame(GameView gameView, Level level, Game game) {
+    void saveGame(Level level, Game game) {
         savedGames.put(level, game);
-
-        List<FigureView> invisibleFigures = new ArrayList<>();
-        for (FigureView figureView : gameView.getFigureViews()) {
-            if (!figureView.isVisible()) invisibleFigures.add(figureView);
-        }
-        invisibleFigureViews.put(level, invisibleFigures);
     }
 
-    Game getSavedGame(GameView gameView, Level level) {
+    Game getSavedGame(Level level) {
         Game savedGame = savedGames.get(level);
         if (savedGame == null) return null;
-
-        deserializationInvisibleFigureViews(gameView, level);
-        gameView.getFigureViews().addAll(invisibleFigureViews.get(level));
 
         return savedGame;
     }
 
     void removeSavedGame(Level level) {
         savedGames.put(level, null);
-        List<FigureView> invisibleFigures = invisibleFigureViews.get(level);
-        if (invisibleFigures != null) invisibleFigures.clear();
-    }
-
-    private void deserializationInvisibleFigureViews(GameView gameView, Level level) {
-        for (FigureView figureView : invisibleFigureViews.get(level)) {
-            if (figureView.isVisible()) continue;
-
-            figureView.setGameView(gameView);
-            figureView.setBatch(gameView.getBatch());
-
-            Figure type = figureView.getType();
-
-            if (type instanceof Pawn) {
-                gameView.setSprite(figureView, gameView.findFigure("black_pawn"), gameView.findFigure("white_pawn"));
-            } else if (type instanceof Rook) {
-                gameView.setSprite(figureView, gameView.findFigure("black_rook"), gameView.findFigure("white_rook"));
-            } else if (type instanceof Knight) {
-                gameView.setSprite(figureView, gameView.findFigure("black_knight"), gameView.findFigure("white_knight"));
-            } else if (type instanceof Bishop) {
-                gameView.setSprite(figureView, gameView.findFigure("black_bishop"), gameView.findFigure("white_bishop"));
-            } else if (type instanceof Queen) {
-                gameView.setSprite(figureView, gameView.findFigure("black_queen"), gameView.findFigure("white_queen"));
-            } else {
-                gameView.setSprite(figureView, gameView.findFigure("black_king"), gameView.findFigure("white_king"));
-            }
-        }
     }
 
     private void writeObject(ObjectOutputStream out) throws IOException {
@@ -446,13 +360,6 @@ public class Account implements Serializable {
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         random = new Random();
-
-        drawableOutlineFigure = true;
-        drawableOutlineFelledFigure = true;
-        drawableHintMoves = true;
-        drawableHintCastle = true;
-        drawableHintCheck = true;
-        drawableGreenCross = true;
     }
 
     public enum AIColorMode {

@@ -94,17 +94,16 @@ public class UIDialog extends Actor {
     }
 
     public void addElement(String text, Actor actor) {
-        addElement(text, 0, actor, 8);
-    }
+        Group group = new Group();
+        group.addActor(actor);
 
-    public void addElement(String text, int textMarginTop, Actor actor, int actorMarginTop) {
         Label textElement = new Label(text, Settings.gdxGame.getLabelSkin(), "default");
         textElement.setFontScale(0.35f);
         textElement.setColor(Color.WHITE);
         textElement.setWrap(true);
 
-        uiScrollPane.getElements().add(textElement).padRight(10).size(getWidth() / 2 - 30, 50).padTop(textMarginTop);
-        uiScrollPane.getElements().add(actor).size(35, 35).padTop(actorMarginTop).row();
+        uiScrollPane.getElements().add(textElement).padRight(10).size(getWidth() / 2 - 30, 50).center();
+        uiScrollPane.getElements().add(group).center().padTop(33).row();
     }
 
     public Cell<Group> addWhiteLine(Actor actor, float heightLine, float heightActor) {

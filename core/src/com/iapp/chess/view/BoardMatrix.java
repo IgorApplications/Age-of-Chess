@@ -23,12 +23,18 @@ public class BoardMatrix {
     }
 
     public static float getPositionX(int x) {
-        if (x > 7 || x < 0) throw new RuntimeException("Iapp: the X of the figure must be in the range [0 - 7]");
+        if (x > 7 || x < 0) {
+            throw new IllegalArgumentException();
+        }
+
         return boardX + WIDTH * x;
     }
 
     public static float getPositionY(int y) {
-        if (y > 7 || y < 0) throw new RuntimeException("Iapp: the Y of the figure must be in the range [0 - 7]");
+        if (y > 7 || y < 0) {
+            throw new IllegalArgumentException();
+        }
+
         y = 7 - y;
         if (Gdx.app.getType() == Application.ApplicationType.Desktop && y == 4)
             return boardY + HEIGHT * y - 0.1f;

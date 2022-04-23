@@ -8,22 +8,24 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.iapp.chess.controller.Account;
+import com.iapp.chess.controller.MenuController;
+import com.iapp.chess.model.ai.AI;
 import com.iapp.chess.standart_ui.ChoiceButton;
 import com.iapp.chess.standart_ui.QuestionDialog;
 import com.iapp.chess.standart_ui.ScoreBoard;
 import com.iapp.chess.standart_ui.UIDialog;
-import com.iapp.chess.util.FigureSet;
-import com.iapp.chess.util.Orientation;
-import com.iapp.chess.util.Settings;
-import com.iapp.chess.util.Text;
+import com.iapp.chess.util.*;
 
 public class SettingsView implements Screen {
+
+    private MenuController menuController;
 
     private OrthographicCamera camera;
     private SpriteBatch batch;
@@ -36,6 +38,8 @@ public class SettingsView implements Screen {
     private ImageButton backButton;
     private ChoiceButton orientation;
     private ChoiceButton gameMode;
+    private ChoiceButton performanceAI;
+    private TextButton clearingAccount;
 
     private ImageButton saveWindowSize;
     private ImageButton outlineFigure;
@@ -57,7 +61,8 @@ public class SettingsView implements Screen {
     private ImageButton board1;
     private ImageButton board2;
 
-    public SettingsView() {
+    public SettingsView(MenuController menuController) {
+        this.menuController = menuController;
         camera = new OrthographicCamera();
         camera.setToOrtho(false, Orientation.cameraWidth, Orientation.cameraHeight);
 
@@ -71,7 +76,7 @@ public class SettingsView implements Screen {
     private void initStage() {
         StretchViewport stretchViewport = new StretchViewport(Orientation.cameraWidth, Orientation.cameraHeight, camera);
 
-        scoreBoard = new ScoreBoard(Settings.controller.defineUserLevelText(Settings.account.getUserLevel()),
+        scoreBoard = new ScoreBoard(menuController.defineUserLevelText(Settings.account.getUserLevel()),
                 String.valueOf(Settings.account.getViewCoins()));
         scoreBoard.setViewport(stretchViewport);
 
@@ -93,11 +98,11 @@ public class SettingsView implements Screen {
 
         uiDialog.addTitle(Text.GAME_MODE);
         if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
-            uiDialog.addElement(Text.SAVE_WINDOW_SIZE, 5, saveWindowSize, 8);
+            uiDialog.addElement(Text.SAVE_WINDOW_SIZE, saveWindowSize);
         } else if (Gdx.app.getType() == Application.ApplicationType.Android) {
-            uiDialog.addElement(Text.ORIENTATION_SCREEN, 5, orientation, 8);
+            uiDialog.addElement(Text.ORIENTATION_SCREEN, orientation);
         }
-        uiDialog.addElement(Text.AI_COLOR, 5, gameMode, 8);
+        uiDialog.addElement(Text.AI_COLOR,  gameMode);
 
         uiDialog.addTitle(Text.GRAPHICS_EFFECTS, 5);
         uiDialog.addElement(Text.OUTLINE_FIGURES, outlineFigure);
@@ -115,6 +120,13 @@ public class SettingsView implements Screen {
         uiDialog.addElement(Text.SOUND_CASTLE, soundCastle);
         uiDialog.addElement(Text.SOUND_CHECK, soundCheck);
         uiDialog.addElement(Text.SOUND_LOSE, soundLose);
+
+        Group group = new Group();
+        group.addActor(clearingAccount);
+
+        uiDialog.addTitle(Text.DEBUG);
+        uiDialog.addElement(Text.AI_PERFORMANCE, performanceAI);
+        uiDialog.addElement(Text.INFO_DELETE_ACCOUNT, group);
 
         stage.addActor(uiDialog);
         uiDialog.pushElements();
@@ -134,6 +146,14 @@ public class SettingsView implements Screen {
         gameMode = new ChoiceButton(Text.BLACK, Text.WHITE, Text.RANDOM);
         gameMode.setSize(185, 35);
         gameMode.setFontScale(0.3f);
+
+        performanceAI = new ChoiceButton("50%", "75%", "100%");
+        performanceAI.setSize(185, 35);
+        performanceAI.setFontScale(0.3f);
+
+        clearingAccount = new TextButton(Text.DELETE_ACCOUNT, Settings.gdxGame.getUIKit(), "button");
+        clearingAccount.getLabel().setFontScale(0.3f);
+        clearingAccount.setSize(120, 35);
 
         saveWindowSize = createCheckButton();
         outlineFigure = createCheckButton();
@@ -197,7 +217,16 @@ public class SettingsView implements Screen {
 
                 Settings.SOUNDS.playClick();
                 if (!Settings.account.isAvailableModeFigures()) {
-                    showDialogAboutBuying();
+                    showQuestionDialog(Text.QUESTION_ABOUT_BUYING, dialog -> {
+                        if (Settings.account.getCoins() < 1000) return;
+
+                        Settings.account.buyModeFigures();
+                        Settings.account.setChosenFigureSet(FigureSet.MODE);
+                        scoreBoard.setCoinText(Settings.account.getViewCoins());
+
+                        coin.setVisible(false);
+                        price.setVisible(false);
+                    }, dialog -> board1.setChecked(true));
                 } else {
                     Settings.account.setChosenFigureSet(FigureSet.MODE);
                 }
@@ -214,7 +243,7 @@ public class SettingsView implements Screen {
                         Settings.orientation.init(Settings.account.getOrientationType());
                     }
 
-                    MainView mainView = new MainView();
+                    MenuView mainView = new MenuView(menuController);
                     Settings.gdxGame.setScreen(mainView);
                     dispose();
                 }), 0.15f);
@@ -227,7 +256,7 @@ public class SettingsView implements Screen {
                     Settings.orientation.init(Settings.account.getOrientationType());
                 }
 
-                MainView mainView = new MainView();
+                MenuView mainView = new MenuView(menuController);
                 Settings.gdxGame.setScreen(mainView);
                 dispose();
             });
@@ -379,9 +408,31 @@ public class SettingsView implements Screen {
                 Settings.account.setBlockedSoundLose(!soundLose.isChecked());
             }
         });
+
+        performanceAI.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                int checkedIndex = performanceAI.getCheckedIndex();
+                if (checkedIndex == -1) return;
+                Settings.SOUNDS.playClick();
+                Settings.account.setAIPerformanceMode(AI.ThreadsMode.values()[checkedIndex]);
+            }
+        });
+
+        clearingAccount.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                Settings.SOUNDS.playClick();
+                showQuestionDialog(Text.DELETE_ACCOUNT_DIALOG, dialog -> {
+                    Settings.account = new Account();
+                    updateScoreBoard();
+                    dialog.hide();
+                }, null);
+            }
+        });
     }
 
-    private void showDialogAboutBuying() {
+    private void showQuestionDialog(String question, DialogListener onAccept, DialogListener onCancel) {
         QuestionDialog questionDialog = new QuestionDialog(Settings.gdxGame.getUIKit());
         questionDialog.setPosition(Orientation.questionAboutBuyingX, Orientation.questionAboutBuyingY);
         questionDialog.setSize(460, 300);
@@ -390,31 +441,24 @@ public class SettingsView implements Screen {
                 .setOnCancel(new ChangeListener() {
                     @Override
                     public void changed(ChangeEvent event, Actor actor) {
-                        board1.setChecked(true);
+                        Settings.SOUNDS.playClick();
+                        if (onCancel != null) onCancel.changed(questionDialog);
                         questionDialog.hide();
                     }
                 })
-                .setQuestion(Text.QUESTION_ABOUT_BUYING)
+                .setQuestion(question)
                 .setPositive(Text.YES, new ChangeListener() {
                     @Override
                     public void changed(ChangeEvent event, Actor actor) {
-                        if (Settings.account.getCoins() < 1000) return;
                         Settings.SOUNDS.playClick();
-
-                        Settings.account.buyModeFigures();
-                        Settings.account.setChosenFigureSet(FigureSet.MODE);
-                        scoreBoard.setCoinText(Settings.account.getViewCoins());
-
-                        coin.setVisible(false);
-                        price.setVisible(false);
-
-                        questionDialog.hide();
+                        if (onAccept!= null) onAccept.changed(questionDialog);
                     }
                 })
                 .setNegative(Text.CANCEL, new ChangeListener() {
                     @Override
                     public void changed(ChangeEvent event, Actor actor) {
-                        board1.setChecked(true);
+                        Settings.SOUNDS.playClick();
+                        if (onCancel != null) onCancel.changed(questionDialog);
                         questionDialog.hide();
                     }
                 })
@@ -425,17 +469,17 @@ public class SettingsView implements Screen {
 
     private void loadSettings() {
         if (Settings.account.getOrientationType() == Orientation.Type.HORIZONTAL) {
-            orientation.setCheckedIndex(Text.HORIZONTAL);
+            orientation.setChecked(Text.HORIZONTAL);
         } else {
-            orientation.setCheckedIndex(Text.VERTICAL);
+            orientation.setChecked(Text.VERTICAL);
         }
 
         if (Settings.account.getAIColorMode() == Account.AIColorMode.BLACK) {
-            gameMode.setCheckedIndex(Text.BLACK);
+            gameMode.setChecked(Text.BLACK);
         } else if (Settings.account.getAIColorMode() == Account.AIColorMode.WHITE) {
-            gameMode.setCheckedIndex(Text.WHITE);
+            gameMode.setChecked(Text.WHITE);
         } else {
-            gameMode.setCheckedIndex(Text.RANDOM);
+            gameMode.setChecked(Text.RANDOM);
         }
 
         saveWindowSize.setChecked(Settings.account.isSaveWindowSize());
@@ -460,6 +504,8 @@ public class SettingsView implements Screen {
         } else if (figureSet == FigureSet.MODE) {
             board2.setChecked(true);
         }
+
+        performanceAI.setChecked(Settings.account.getAIPerformanceMode().ordinal());
     }
 
     @Override
@@ -489,7 +535,7 @@ public class SettingsView implements Screen {
 
     @Override
     public void pause() {
-
+        Settings.DATA.saveAccount(Settings.account);
     }
 
     @Override
@@ -509,8 +555,14 @@ public class SettingsView implements Screen {
         stage.dispose();
     }
 
+    private void updateScoreBoard() {
+        scoreBoard.setUserLevel(menuController.defineUserLevelText(Settings.account.getUserLevel()));
+        scoreBoard.setCoinText(String.valueOf(Settings.account.getViewCoins()));
+    }
+
     private ImageButton createCheckButton() {
         ImageButton imageButton =  new ImageButton(Settings.gdxGame.getUIKit(), "check");
+        imageButton.setSize(35, 35);
         imageButton.setChecked(true);
         return imageButton;
     }

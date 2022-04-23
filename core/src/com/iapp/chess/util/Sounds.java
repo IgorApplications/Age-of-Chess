@@ -14,7 +14,7 @@ public class Sounds implements Disposable {
     private Sound winMaster;
     private Sound lose;
 
-    private static Sounds sounds = new Sounds();
+    private static final Sounds sounds = new Sounds();
 
     private boolean playWinSound;
 

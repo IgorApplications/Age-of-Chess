@@ -8,8 +8,6 @@ import com.iapp.chess.GdxGame;
 import com.iapp.chess.Launcher;
 import com.iapp.chess.util.CallListener;
 
-import java.awt.*;
-
 public class DesktopLauncher implements Launcher {
 
 	public static void main (String[] arg) {
@@ -45,13 +43,7 @@ public class DesktopLauncher implements Launcher {
 	@Override
 	public void addOnFinish(CallListener callListener) {}
 
-	@Override
-	public int[] getDeviceScreen() {
-		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-		return new int[]{screenSize.width, screenSize.height};
-	}
-
-	private void flip() {
+    private void flip() {
 		Gdx.graphics.setWindowedMode(Gdx.graphics.getHeight(), Gdx.graphics.getWidth());
 	}
 }

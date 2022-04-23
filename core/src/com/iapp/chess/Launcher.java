@@ -9,6 +9,4 @@ public interface Launcher {
     void setRequestedHorizontally();
 
     void addOnFinish(CallListener callListener);
-
-    int[] getDeviceScreen();
 }

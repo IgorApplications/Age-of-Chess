@@ -1,6 +1,5 @@
 package com.iapp.chess;
 
-import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.iapp.chess.util.CallListener;
 import org.robovm.apple.foundation.NSAutoreleasePool;
 import org.robovm.apple.uikit.UIApplication;
@@ -37,8 +36,4 @@ public class IOSLauncher extends IOSApplication.Delegate implements Launcher {
         throw new UnsupportedOperationException();
     }
 
-    @Override
-    public int[] getDeviceScreen() {
-        throw new UnsupportedOperationException();
-    }
 }

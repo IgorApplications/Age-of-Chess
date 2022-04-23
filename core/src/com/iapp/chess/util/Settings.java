@@ -3,7 +3,6 @@ package com.iapp.chess.util;
 import com.iapp.chess.GdxGame;
 import com.iapp.chess.Launcher;
 import com.iapp.chess.controller.Account;
-import com.iapp.chess.controller.Controller;
 
 public class Settings {
 
@@ -15,7 +14,6 @@ public class Settings {
     public static final Object MUTEX = new Object();
 
     public static GdxGame gdxGame;
-    public static Controller controller;
     public static Account account;
     public static Orientation orientation;
     public static Launcher launcher;

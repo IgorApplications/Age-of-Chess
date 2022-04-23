@@ -1,19 +1,21 @@
 package com.iapp.chess.model.ai;
 
-import com.iapp.chess.model.*;
-import com.iapp.chess.util.Settings;
+import com.badlogic.gdx.utils.Array;
+import com.iapp.chess.model.Color;
+import com.iapp.chess.model.Game;
+import com.iapp.chess.model.Move;
 
-import java.io.*;
-import java.util.*;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * Generalized class for all AI
- * @authoor IgorAppliactions
- * @version pre-Alpha
- */
-public abstract class AI implements Serializable {
+public class AI {
 
-    private  float[][] pawnEvalWhite = {
+    private final float[][] pawnEvalWhite = {
             {0.0f,  0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
             {5.0f, 5.0f, 5.0f, 5.0f, 5.0f, 5.0f, 5.0f, 5.0f},
             {1.0f, 1.0f, 2.0f, 3.0f, 3.0f, 2.0f, 1.0f, 1.0f},
@@ -24,9 +26,9 @@ public abstract class AI implements Serializable {
             {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}
     };
 
-    private float[][] pawnEvalBlack = reverseMatrix(pawnEvalWhite);
+    private final float[][] pawnEvalBlack = reverseMatrix(pawnEvalWhite);
 
-    private float[][] knightEval = {
+    private final float[][] knightEval = {
             {-5.0f, -4.0f, -3.0f, -3.0f, -3.0f, -3.0f, -4.0f, -5.0f},
             {-4.0f, -2.0f, 0.0f, 0.0f, 0.0f, 0.0f, -2.0f, -4.0f},
             {-3.0f, 0.0f, 1.0f, 1.5f, 1.5f, 1.0f, 0.0f, -3.0f},
@@ -37,7 +39,7 @@ public abstract class AI implements Serializable {
             {-5.0f, -4.0f, -3.0f, -3.0f, -3.0f, -3.0f, -4.0f, -5.0f}
     };
 
-    private float[][] bishopEvalWhite = {
+    private final float[][] bishopEvalWhite = {
             {-2.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -2.0f},
             {-1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f},
             {-1.0f, 0.0f, 0.5f, 1.0f, 1.0f, 0.5f, 0.0f, -1.0f},
@@ -48,9 +50,9 @@ public abstract class AI implements Serializable {
             {-2.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -2.0f}
     };
 
-    private float[][] bishopEvalBlack = reverseMatrix(bishopEvalWhite);
+    private final float[][] bishopEvalBlack = reverseMatrix(bishopEvalWhite);
 
-    private float[][] rookEvalWhite = {
+    private final float[][] rookEvalWhite = {
             {0.0f,  0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
             {0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.5f},
             {-0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -0.5f},
@@ -61,9 +63,9 @@ public abstract class AI implements Serializable {
             {0.0f, 0.0f, 0.0f, 0.5f, 0.5f, 0.0f, 0.0f, 0.0f}
     };
 
-    private float[][] rookEvalBlack = reverseMatrix(rookEvalWhite);
+    private final float[][] rookEvalBlack = reverseMatrix(rookEvalWhite);
 
-    private float[][] evalQueen = {
+    private final float[][] evalQueen = {
             {-2.0f, -1.0f, -1.0f, -0.5f, -0.5f, -1.0f, -1.0f, -2.0f},
             {-1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f},
             {-1.0f, 0.0f, 0.5f, 0.5f, 0.5f, 0.5f, 0.0f, -1.0f},
@@ -74,7 +76,7 @@ public abstract class AI implements Serializable {
             {-2.0f, -1.0f, -1.0f, -0.5f, -0.5f, -1.0f, -1.0f, -2.0f}
     };
 
-    private float[][] kingEvalWhite = {
+    private final float[][] kingEvalWhite = {
             {-3.0f, -4.0f, -4.0f, -5.0f, -5.0f, -4.0f, -4.0f, -3.0f},
             {-3.0f, -4.0f, -4.0f, -5.0f, -5.0f, -4.0f, -4.0f, -3.0f},
             {-3.0f, -4.0f, -4.0f, -5.0f, -5.0f, -4.0f, -4.0f, -3.0f},
@@ -85,147 +87,160 @@ public abstract class AI implements Serializable {
             {2.0f, 3.0f, 1.0f, 0.0f, 0.0f, 1.0f, 3.0f, 2.0f}
     };
 
-    private float[][] kingEvalBlack = reverseMatrix(kingEvalWhite);
+    private final float[][] kingEvalBlack = reverseMatrix(kingEvalWhite);
 
-    protected Game game;
-    protected Game cloneGame;
-    protected Color aiColor;
-    protected Color userColor;
-    private Random random = new Random();
+    private final ExecutorService aiThreadPool;
+    private final int depth;
+    private Color aiColor;
+    private Color userColor;
 
-    public AI(Color color) {
-        this.aiColor = color;
-        userColor = reverseColor(aiColor);
-    }
+    public AI(int depth, ThreadsMode threadsMode, Color color) {
+        this.depth = depth;
+        aiThreadPool = Executors.newFixedThreadPool((int) (Runtime.getRuntime().availableProcessors() * threadsMode.coefficient));
 
-    public void setGame(Game game) {
-        this.game = game;
-        this.cloneGame = game.deepClone();
-    }
-
-    public void cloneGame() {
-        this.cloneGame = game.deepClone();
+        aiColor = color;
+        userColor = reverse(color);
     }
 
     public void setAIColor(Color aiColor) {
         this.aiColor = aiColor;
-        userColor = reverseColor(aiColor);
+        userColor = reverse(aiColor);
     }
 
-    public Color getAIColor() { return aiColor; }
+    public Color getAIColor() {
+        return aiColor;
+    }
 
-    public Thread getMove(int depth, AIListener aiListener) {
-        cloneGame();
+    public void setUserColor(Color userColor) {
+        this.userColor = userColor;
+        aiColor = reverse(userColor);
+    }
+
+    public Color getUserColor() {
+        return userColor;
+    }
+    private AtomicInteger countMinimaxThreads = new AtomicInteger(0);
+    private Map<Move, Integer> minimaxResult;
+
+    public void getMove(Game game, AIListener callback) {
+        countMinimaxThreads = new AtomicInteger(0);
+        minimaxResult = new ConcurrentHashMap<>();
+        Game cloneGame = game.cloneGame();
 
         Runnable task = () -> {
-            synchronized (Settings.MUTEX) {
-                try {
-                    int bestMove = Integer.MIN_VALUE;
-                    Transition virtualAIMove = null;
+            try {
+                long start = System.currentTimeMillis();
 
-                    for (Transition transition : getAllTransitions(aiColor)) {
+                int bestMove = Integer.MIN_VALUE;
+                Move virtualAIMove = null;
 
-                        if (Thread.currentThread().isInterrupted()) return;
+                for (Move move : getAllMoves(cloneGame, aiColor)) {
 
-                        move(transition);
-                        int value;
-
-                        try {
-                            value = getMiniMax(depth - 1, -10_000, 10_000, userColor);
-                        } catch (InterruptedException e) {
-                            System.out.println("debug: aiThread is interrupted");
-                            aiListener.finishMove(null);
-                            return;
-                        }
-                        backMove();
-
-                        if (value >= bestMove) {
-                            bestMove = value;
-                            virtualAIMove = transition;
-                        }
-                    }
-
-                    Figure figure = game.getFigure(virtualAIMove.getFigureX(), virtualAIMove.getFigureY());
-                    Transition transition = new Transition(game, figure.getX(), figure.getY(), virtualAIMove.getMove());
-
-                    if (transition.isCastlingMove()) {
-                        transition.setCastlingMove(transition.getLastRookX(), transition.getLastRookY(), transition.getRookX());
-                    }
-                    if (transition.isUpdatedPawnMove()) {
-                        Figure updatedPawn = game.getFigure(transition.getUpdatedPawn().getX(), transition.getUpdatedPawn().getY());
-                        transition.setUpdatedPawn(updatedPawn);
-                    }
-
-                    aiListener.finishMove(transition);
-                } catch (RuntimeException e) {
-                    System.err.println("AI move failure, should be caused by thread interruption ->");
+                    cloneGame.makeMove(move);
+                    getParallelMiniMax(cloneGame.cloneGame(), move, depth - 1, -10_000, 10_000, userColor);
+                    countMinimaxThreads.incrementAndGet();
+                    cloneGame.cancelMove();
                 }
+
+                while (countMinimaxThreads.get() != 0) {
+                    Thread.yield();
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException ignored) {
+                        return;
+                    }
+                }
+
+                for (Map.Entry<Move, Integer> pair : minimaxResult.entrySet()) {
+                    if (pair.getValue() >= bestMove) {
+                        bestMove = pair.getValue();
+                        virtualAIMove = pair.getKey();
+                    }
+                }
+
+                if (virtualAIMove != null) {
+                    callback.finish(virtualAIMove);
+                }
+
+                long end = System.currentTimeMillis();
+                System.out.println("The AI made move in " + (end - start) + " millis");
+
+            } catch (RejectedExecutionException e) {
+                e.printStackTrace(System.out);
             }
         };
-        Thread aiThread = new Thread(task);
-        aiThread.start();
-
-        return aiThread;
-    }
-    private float[][] reverseMatrix(float[][] matrix) {
-        float[][] reverseMatrix = new float[matrix.length][matrix[0].length];
-
-        for (int i = matrix.length - 1; i >= 0; i--) {
-            System.arraycopy(matrix[i], 0, reverseMatrix[matrix.length - 1 - i], 0, matrix[i].length);
-        }
-
-        return reverseMatrix;
+        aiThreadPool.execute(task);
     }
 
-    private int evaluateBoard() {
+    public void interrupt() {
+        aiThreadPool.shutdownNow();
+    }
+
+    private void getParallelMiniMax(Game cloneGame, Move move, int depth, int alpha, int beta, Color userColor) {
+        Runnable task = () -> {
+            try {
+                minimaxResult.put(move, getMiniMax(cloneGame, depth, alpha, beta, userColor));
+            } catch (InterruptedException | RejectedExecutionException e) {
+                e.printStackTrace(System.out);
+            }
+            countMinimaxThreads.decrementAndGet();
+        };
+        aiThreadPool.execute(task);
+    }
+
+
+    private int evaluateBoard(Game game) {
         int totalEvaluation = 0;
-        for (Figure figure : cloneGame.getGameFigures()) {
-            totalEvaluation += evaluateFigure(figure);
+
+        byte[][] matrix = game.getMatrix();
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix[i].length; j++) {
+                totalEvaluation += evaluateFigure(game, j, i);
+            }
         }
         return totalEvaluation;
     }
 
-    public float evaluateFigure(Figure figure) {
-        int x = figure.getY(), y = figure.getY();
+    public float evaluateFigure(Game game, int x, int y) {
 
         float eval = 0;
-        if (figure instanceof Pawn) {
-             eval = 10 + (figure.getColor() == Color.BLACK ? pawnEvalBlack[y][x] : pawnEvalWhite[y][x]);
-        } else if (figure instanceof Rook) {
-             eval = 50 + (figure.getColor() == Color.BLACK ? rookEvalBlack[y][x] : rookEvalWhite[y][x]);
-        } else if (figure instanceof Knight) {
-             eval = 30 + knightEval[y][x];
-        } else if (figure instanceof Bishop) {
-             eval =  30 + (figure.getColor() == Color.BLACK ? bishopEvalBlack[y][x] : bishopEvalWhite[y][x]);
-        } else if (figure instanceof Queen) {
-             eval =  90 + evalQueen[y][x];
-        } else if (figure instanceof King) {
-             eval = 900 + (figure.getColor() == Color.BLACK ? kingEvalBlack[y][x] : kingEvalWhite[y][x]);
+        if (game.isPawn(x, y)) {
+            eval = 10 + (game.getColor(x, y) == Color.BLACK ? pawnEvalBlack[y][x] : pawnEvalWhite[y][x]);
+        } else if (game.isRook(x, y)) {
+            eval = 50 + (game.getColor(x, y) == Color.BLACK ? rookEvalBlack[y][x] : rookEvalWhite[y][x]);
+        } else if (game.isKnight(x, y)) {
+            eval = 30 + knightEval[y][x];
+        } else if (game.isBishop(x, y)) {
+            eval =  30 + (game.getColor(x, y) == Color.BLACK ? bishopEvalBlack[y][x] : bishopEvalWhite[y][x]);
+        } else if (game.isQueen(x, y)) {
+            eval =  90 + evalQueen[y][x];
+        } else if (game.isKing(x, y)) {
+            eval = 900 + (game.getColor(x, y) == Color.BLACK ? kingEvalBlack[y][x] : kingEvalWhite[y][x]);
         }
 
-        return figure.getColor() == aiColor ? eval : -eval;
+        return game.getColor(x, y) == aiColor ? eval : -eval;
     }
 
-    public int getMiniMax(int depth, int alpha, int beta, Color color) throws InterruptedException  {
+    public int getMiniMax(Game cloneGame, int depth, int alpha, int beta, Color color) throws InterruptedException  {
         if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
 
         if (depth == 0) {
-            return evaluateBoard();
+            return evaluateBoard(cloneGame);
         }
 
-        List<Transition> transitions = getAllTransitions(color);
+        Array<Move> moves = getAllMoves(cloneGame, color);
 
         int bestMove;
         if (color == aiColor) {
             bestMove = Integer.MIN_VALUE;
 
-            for (Transition transition : transitions) {
-                move(transition);
+            for (Move move : moves) {
+                cloneGame.makeMove(move);
 
-                int value = getMiniMax(depth - 1, alpha, beta, reverseColor(color));
+                int value = getMiniMax(cloneGame,depth - 1, alpha, beta, cloneGame.reverse(color));
                 bestMove = Math.max(bestMove, value);
 
-                backMove();
+                cloneGame.cancelMove();
 
 
                 alpha = Math.max(alpha, bestMove);
@@ -236,13 +251,13 @@ public abstract class AI implements Serializable {
         } else {
             bestMove = Integer.MAX_VALUE;
 
-            for (Transition transition : transitions) {
-                move(transition);
+            for (Move move : moves) {
+                cloneGame.makeMove(move);
 
-                int value = getMiniMax(depth - 1, alpha, beta, reverseColor(color));
+                int value = getMiniMax(cloneGame, depth - 1, alpha, beta, cloneGame.reverse(color));
                 bestMove = Math.min(bestMove, value);
 
-                backMove();
+                cloneGame.cancelMove();
 
             }
 
@@ -255,48 +270,42 @@ public abstract class AI implements Serializable {
         return bestMove;
     }
 
-    public List<Transition> getAllTransitions(Color color) {
-        Color lastColor = cloneGame.getColorMove();
-        cloneGame.setColorMove(color);
-        List<Transition> transitions = new ArrayList<>();
+    public Array<Move> getAllMoves(Game game, Color color) {
+        Array<Move> moves = new Array<>();
+        byte[][] matrix = game.getMatrix();
 
-        for (Figure figure : cloneGame.getActiveFigures(color)) {
-            for (Move move : cloneGame.getMoves(figure)) {
-                Transition transition = new Transition(cloneGame, figure, move);
-                transitions.add(transition);
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix[i].length; j++) {
+                if (game.getColor(j, i) == color) {
+                    moves.addAll(game.getMoves(j, i));
+                }
             }
         }
-        cloneGame.setColorMove(lastColor);
 
-        return transitions;
+        return moves;
     }
 
-    public abstract Thread getMove(AIListener aiListener);
+    private float[][] reverseMatrix(float[][] matrix) {
+        float[][] reversedMatrix = new float[matrix.length][matrix[0].length];
 
-    /**
-     * @return Transition of a random move and a random figure
-     * */
-    Transition getRandomMove() {
-        List<Figure> figures = cloneGame.getActiveFigures(aiColor);
-        if (figures.size() == 0) return null;
-        Figure randFigure = figures.get(random.nextInt(figures.size()));
-
-        List<Move> moves = cloneGame.getMoves(randFigure.getX(), randFigure.getY());
-        Move randMove = moves.get(random.nextInt(moves.size()));
-
-        return new Transition(cloneGame, randFigure.getX(), randFigure.getY(), randMove);
+        for (int i = matrix.length - 1; i >= 0; i--) {
+            System.arraycopy(matrix[i], 0, reversedMatrix[matrix.length - 1 - i], 0, matrix[i].length);
+        }
+        return reversedMatrix;
     }
 
-    void move(Transition transit) {
-        cloneGame.move(transit);
-        cloneGame.reverseColorMove();
+    private Color reverse(Color first) {
+        return first == Color.BLACK ? Color.WHITE : Color.BLACK;
     }
 
-    void backMove() {
-        cloneGame.backMove();
-    }
+    public enum ThreadsMode {
+        HALF_THREADS(0.5f),
+        MORE_THREADS(0.75f),
+        ALL_THREADS(1);
 
-    Color reverseColor(Color color) {
-        return color == Color.BLACK ? Color.WHITE : Color.BLACK;
+        final float coefficient;
+        ThreadsMode(float coefficient) {
+            this.coefficient = coefficient;
+        }
     }
 }

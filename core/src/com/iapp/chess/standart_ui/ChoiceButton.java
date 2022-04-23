@@ -11,8 +11,11 @@ public class ChoiceButton extends Group {
     private ButtonGroup<TextButton> group = new ButtonGroup<>();
 
     public ChoiceButton(String... textArr) {
+        if (textArr.length < 2) throw new IllegalArgumentException();
+
         TextButton choiceStart = new TextButton(textArr[0], Settings.gdxGame.getUIKit(), "choice1");
         addChoice(choiceStart);
+
         for (int i = 1; i < textArr.length - 1; i++) {
             TextButton choice = new TextButton(textArr[i], Settings.gdxGame.getUIKit(), "choice2");
             addChoice(choice);
@@ -36,6 +39,7 @@ public class ChoiceButton extends Group {
             TextButton textButton = array.get(i);
             textButton.setX(btnWidth * i);
             textButton.setSize(btnWidth, height);
+            textButton.getLabel().setSize(btnWidth, height);
         }
 
         super.setSize(width, height);
@@ -49,8 +53,12 @@ public class ChoiceButton extends Group {
         return group.getCheckedIndex();
     }
 
-    public void setCheckedIndex(String text) {
+    public void setChecked(String text) {
         group.setChecked(text);
+    }
+
+    public void setChecked(int index) {
+        group.getButtons().get(index).setChecked(true);
     }
 
     private void addChoice(TextButton textButton) {

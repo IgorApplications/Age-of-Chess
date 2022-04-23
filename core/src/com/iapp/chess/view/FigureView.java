@@ -6,78 +6,37 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.math.Vector3;
-import com.iapp.chess.model.Color;
-import com.iapp.chess.model.Figure;
+import com.badlogic.gdx.utils.Array;
+import com.iapp.chess.controller.GameController;
 import com.iapp.chess.model.Move;
-import com.iapp.chess.model.Pawn;
+import com.iapp.chess.util.CallListener;
 import com.iapp.chess.util.Orientation;
 import com.iapp.chess.util.Settings;
 
-import java.io.Serializable;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-public class FigureView implements Serializable {
+public class FigureView {
 
-    private int x, y, lastX, lastY;
+    private GameController gameController;
+    private boolean visible = true;
+    private int x = -1, y = -1;
+    private int lastX = -1, lastY = -1;
     private float effectX, effectY;
 
-    private Figure type;
-    private Color color;
-    private Move currentMove;
-    private boolean visible = true;
-    private boolean makeSoundMove = true;
+    private boolean makesMove;
+    private Sprite sprite;
+    private CallListener callback;
 
-    private transient GameView gameView;
-    private transient SpriteBatch batch;
-    private transient Sprite sprite;
-    private boolean doMove;
-
-    public FigureView(GameView gameView, SpriteBatch batch, TextureAtlas.AtlasRegion image, Figure type, Color color) {
-        this.batch = batch;
+    public FigureView(int x, int y, TextureAtlas.AtlasRegion image) {
+        this.gameController = gameController;
+        this.x = x;
+        this.y = y;
         sprite = new Sprite(image);
-        this.type = type;
-        this.x = type.getX();
-        this.y = type.getY();
-        this.color = color;
-        this.gameView = gameView;
     }
 
-    public GameView getGameView() {
-        return gameView;
-    }
-
-    public void setGameView(GameView gameView) {
-        this.gameView = gameView;
-    }
-
-    public SpriteBatch getBatch() {
-        return batch;
-    }
-
-    public void setBatch(SpriteBatch batch) {
-        this.batch = batch;
-    }
-
-    public Sprite getSprite() {
-        return sprite;
-    }
-
-    public void setSprite(Sprite sprite) {
-        this.sprite = sprite;
-    }
-
-    public void setSprite(TextureAtlas.AtlasRegion image) {
-        this.sprite = new Sprite(image);
-    }
-
-    public Figure getType() {
-        return type;
-    }
-
-    public void setType(Figure type) {
-        this.type = type;
+    public FigureView(boolean visible) {
+        this.visible = visible;
     }
 
     public boolean isVisible() {
@@ -88,6 +47,10 @@ public class FigureView implements Serializable {
         this.visible = visible;
     }
 
+    public void setImage(TextureAtlas.AtlasRegion image) {
+        this.sprite = new Sprite(image);
+    }
+
     public int getX() {
         return x;
     }
@@ -96,71 +59,52 @@ public class FigureView implements Serializable {
         return y;
     }
 
-    public boolean isDoMove() {
-        return doMove;
+    public int getLastX() {
+        return lastX;
     }
 
-    public Color getColor() {
-        return color;
+    public int getLastY() {
+        return lastY;
     }
 
-    public void setColor(Color color) {
-        this.color = color;
+    public boolean isMakesMove() {
+        return makesMove;
     }
 
-    public int getLastX() { return lastX; }
-
-    public int getLastY() { return lastY; }
-
-    public boolean isMakeSoundMove() {
-        return makeSoundMove;
+    public void setMakesMove(boolean makesMove) {
+        this.makesMove = makesMove;
     }
 
-    public void setMakeSoundMove(boolean makeSoundMove) {
-        this.makeSoundMove = makeSoundMove;
+    public void addOnFinishSound(CallListener callback) {
+        this.callback = callback;
     }
 
     public void setPosition(int x, int y) {
-        this.x = x;
-        this.y = y;
-        doMove = true;
-    }
-
-    public void doMove(Move move) {
-        currentMove = move;
-        effectX = BoardMatrix.getPositionX(move.getX()) - BoardMatrix.getPositionX(this.x);
-        effectY = BoardMatrix.getPositionY(move.getY()) - BoardMatrix.getPositionY(this.y);
         lastX = this.x;
         lastY = this.y;
-        this.x = move.getX();
-        this.y = move.getY();
-        doMove = true;
-    }
-
-    private boolean cancel;
-
-    public void doMove(Move move, boolean cancel) {
-        doMove(move);
-        this.cancel = cancel;
-    }
-
-    public void castle(Move castleMove, int x) {
-        currentMove = castleMove;
-        effectX = BoardMatrix.getPositionX(x) - BoardMatrix.getPositionX(this.x);
-        lastX = this.x;
         this.x = x;
-        doMove = true;
+        this.y = y;
     }
 
-    public void showMoves() {
+    public void makeMove(int moveX, int moveY) {
+        if (isValid()) {
+            effectX = BoardMatrix.getPositionX(moveX) - BoardMatrix.getPositionX(x);
+            effectY = BoardMatrix.getPositionY(moveY) - BoardMatrix.getPositionY(y);
+        }
+        setPosition(moveX, moveY);
+
+        makesMove = true;
+        effectCompleted = false;
+    }
+
+    public void showMoves(GameController gameController, GameView gameView) {
         if (!visible) return;
 
-        List<Move> moves = Settings.controller.getMoves(x, y);
+        Array<Move> moves = gameView.getMoves();
         if (!moves.isEmpty()) gameView.clearGreenCross();
-        Map<Move, Sprite> sprites = new HashMap<>();
 
+        Map<Move, Sprite> sprites = new HashMap<>();
         addInvisibleMoves(moves, sprites);
-        gameView.drawMoves(moves);
 
         if (Gdx.input.isTouched()) {
             Vector3 touchPoint = new Vector3();
@@ -169,25 +113,22 @@ public class FigureView implements Serializable {
                 gameView.getCamera().unproject(touchPoint.set(Gdx.input.getX(), Gdx.input.getY(), 0));
 
                 if (sprites.get(move).getBoundingRectangle().contains(touchPoint.x, touchPoint.y)) {
-
-                    if (Settings.controller.getFigure(x, y) instanceof Pawn &&
-                            (move.getY() == 7 || move.getY() == 0)) {
-                        gameView.getDialogView().showChoiceFigureDialog(this, move);
-                        return;
-                    }
-
-                    currentMove = move;
-                    Settings.controller.moveUser(this, move);
-                    Settings.controller.moveAI();
-
+                    gameController.makeMove(move);
+                    if (!gameController.isUpdated(move)) gameView.clearMoves();
                     break;
                 }
             }
         }
     }
 
-    public void draw() {
-        if (!visible && doMove) doMove = false;
+    @Override
+    public String toString() {
+        return String.format("x = %d, y = %d", x, y);
+    }
+
+    private boolean effectCompleted = true;
+
+    public void draw(SpriteBatch batch) {
         if (!visible) return;
 
         effectY -= effectY / 5;
@@ -197,52 +138,39 @@ public class FigureView implements Serializable {
         batch.draw(sprite, BoardMatrix.getPositionX(x) - effectX + Orientation.figureMarginX, BoardMatrix.getPositionY(y) - effectY + Orientation.figureMarginY,
                 Orientation.figureSpriteSize, Orientation.figureSpriteSize);
 
-        if (doMove && effectX < 0.1f && effectY < 0.1f && effectX > -0.1f && effectY > -0.1f) {
-
-            if ((type.getColor() == Settings.controller.getUserColor() && !cancel) || Settings.controller.haveAIFirstMove()) {
-                Settings.controller.setAIMakesMove(true);
-            }
-
-            if (type.getColor() == Settings.controller.getAIColor() && !cancel) {
-                Settings.controller.setAIMakesMove(false);
-            }
-
+        if (!effectCompleted && effectX < 0.1f && effectY < 0.1f && effectX > -0.1f && effectY > -0.1f) {
             effectX = 0;
             effectY = 0;
-            doMove = false;
-            if (currentMove != null && !currentMove.isCastlingMove() && makeSoundMove)
-                Settings.SOUNDS.playMove();
-            makeSoundMove = true;
+            effectCompleted = true;
 
-            cancel = false;
+            if (callback != null) callback.call();
+            callback = null;
+        }
+
+        if (effectCompleted) {
+            makesMove = false;
         }
     }
 
     public boolean isTouched(OrthographicCamera camera) {
         Vector3 touchPoint = new Vector3();
 
-        camera.unproject(touchPoint.set(Gdx.input.getX(),Gdx.input.getY(),0));
+        camera.unproject(touchPoint.set(Gdx.input.getX(), Gdx.input.getY(),0));
+
+        if (((int)sprite.getBoundingRectangle().x) == 0) return false;
         return sprite.getBoundingRectangle().contains(touchPoint.x, touchPoint.y);
     }
 
-    private void addInvisibleMoves(List<Move> moves, Map<Move, Sprite> sprites) {
+    private void addInvisibleMoves(Array<Move> moves, Map<Move, Sprite> sprites) {
         for (Move move : moves) {
             Sprite noVisibleMove = new Sprite();
-            noVisibleMove.setPosition(BoardMatrix.getPositionX(move.getX()), BoardMatrix.getPositionY(move.getY()));
+            noVisibleMove.setPosition(BoardMatrix.getPositionX(move.getMoveX()), BoardMatrix.getPositionY(move.getMoveY()));
             noVisibleMove.setSize(Orientation.figureSpriteSize, Orientation.figureSpriteSize);
             sprites.put(move, noVisibleMove);
         }
     }
 
-    public void moveView(int x, int y) {
-        effectX = BoardMatrix.getPositionX(x) - BoardMatrix.getPositionX(this.x);
-        effectY = BoardMatrix.getPositionY(y) - BoardMatrix.getPositionY(this.y);
-        this.x = x;
-        this.y = y;
-        doMove = true;
-    }
-
-    private boolean existsCheckKing() {
-        return Settings.controller.findCheckKing() != null;
+    private boolean isValid() {
+        return x != -1 && y != -1;
     }
 }

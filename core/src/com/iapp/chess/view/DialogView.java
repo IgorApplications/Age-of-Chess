@@ -10,17 +10,21 @@ import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.iapp.chess.controller.GameController;
 import com.iapp.chess.controller.Level;
 import com.iapp.chess.controller.Result;
 import com.iapp.chess.model.*;
+import com.iapp.chess.model.BoardMatrix;
 import com.iapp.chess.standart_ui.QuestionDialog;
 import com.iapp.chess.standart_ui.UIUtils;
 import com.iapp.chess.util.Orientation;
 import com.iapp.chess.util.Settings;
 import com.iapp.chess.util.Text;
+import org.w3c.dom.ls.LSOutput;
 
 public class DialogView {
 
+    private GameController gameController;
     private GameView gameView;
     private Stage stage;
     private Dialog descriptionDialog;
@@ -28,7 +32,8 @@ public class DialogView {
     private Texture yellowLine;
     private Texture redLine;
 
-    public DialogView(GameView gameView, Stage stage) {
+    public DialogView(GameController gameController, GameView gameView, Stage stage) {
+        this.gameController = gameController;
         this.gameView = gameView;
         this.stage = stage;
 
@@ -48,9 +53,9 @@ public class DialogView {
             }
 
             synchronized (Settings.MUTEX) {
-                if (result == null) throw new RuntimeException("Iapp: result can't be null");
+                if (result == null) throw new IllegalArgumentException();
                 else if (result == Result.VICTORY) nextUserLevel();
-                Settings.controller.blockGame();
+                gameController.blockGame();
 
                 Dialog dialog = new Dialog("", Settings.gdxGame.getDialogSkin(), "res_dialog");
                 dialog.setPosition(Orientation.finishDialogX, Orientation.finishDialogY);
@@ -67,8 +72,8 @@ public class DialogView {
                     Settings.SOUNDS.playLose();
                 }
 
-                int turns = (int) Settings.controller.getTurn();
-                Level level = Settings.controller.getLevel();
+                int turns = gameController.getTurn();
+                Level level = gameController.getLevel();
 
                 initFinishTitle(dialog, result);
                 if (result == Result.VICTORY || result == Result.BLACK_VICTORY || result == Result.WHITE_VICTORY) {
@@ -76,12 +81,11 @@ public class DialogView {
                 } else {
                     initLoseText(dialog, result, level, turns);
                 }
-
                 stage.addActor(dialog);
 
                 if (result != Result.LOSE && result != Result.DRAW) {
                     int bestRes = Settings.account.getRecordTurnsOnLevel(level);
-                    int currentTurn = (int) Settings.controller.getTurn();
+                    int currentTurn = gameController.getTurn();
                     if (bestRes > currentTurn) Settings.account.updateTurnsByLevel(level, currentTurn);
                 }
             }
@@ -99,12 +103,12 @@ public class DialogView {
             public void changed(ChangeEvent event, Actor actor) {
                 Settings.SOUNDS.playClick();
                 dialog.hide();
-                Settings.controller.unblockGame();
+                gameController.unblockGame();
             }
         });
 
         Image line;
-        if (result == Result.VICTORY || result ==   Result.BLACK_VICTORY || result ==  Result.WHITE_VICTORY) {
+        if (result == Result.VICTORY || result == Result.BLACK_VICTORY || result == Result.WHITE_VICTORY) {
             line = new Image(yellowLine);
             resultText.setColor(Color.GOLD);
         } else {
@@ -131,7 +135,7 @@ public class DialogView {
         Image coin = new Image(Settings.gdxGame.findRegion("coin"));
         coin.setSize(18, 18);
 
-        Label text3 = new Label(String.valueOf(Settings.controller.getLevel().getCoins()), Settings.gdxGame.getUIKit());
+        Label text3 = new Label(String.valueOf(gameController.getLevel().getCoins()), Settings.gdxGame.getUIKit());
         text3.setFontScale(0.4f);
         text3.setSize(100, 20);
         text3.setX(25);
@@ -212,9 +216,9 @@ public class DialogView {
 
     private Group getStars() {
         Group stars = new Group();
-        Image star1 = Settings.controller.getResImage(100),
-                star2 = Settings.controller.getResImage(50),
-                star3  = Settings.controller.getResImage(25);
+        Image star1 = gameController.getResImage(100),
+                star2 = gameController.getResImage(50),
+                star3  = gameController.getResImage(25);
         star1.setSize(25, 25);
         star2.setSize(25, 25);
         star2.setX(33.3f);
@@ -227,21 +231,23 @@ public class DialogView {
 
         return stars;
     }
+
+
     /**
      * ChoiceFigureDialog
      * */
-    public void showChoiceFigureDialog(FigureView pawn, Move movePawn) {
-        Settings.controller.blockGame();
+    public void showChoiceFigureDialog(Move move) {
+        gameController.blockGame();
 
         Dialog dialog = new Dialog("", Settings.gdxGame.getDialogSkin(), "rect");
         dialog.setColor(com.badlogic.gdx.graphics.Color.BLACK);
         dialog.setPosition(Orientation.choiceDialogX, Orientation.choiceDialogY);
         dialog.setSize(410, 320);
 
-        Image imageQueen = new Image(gameView.findFigure("white_queen"));
-        Image imageRook = new Image(gameView.findFigure("white_rook"));
-        Image imageBishop = new Image(gameView.findFigure("white_bishop"));
-        Image imageKnight = new Image(gameView.findFigure("white_knight"));
+        Image imageQueen = new Image(gameView.findImageFigure("white_queen"));
+        Image imageRook = new Image(gameView.findImageFigure("white_rook"));
+        Image imageBishop = new Image(gameView.findImageFigure("white_bishop"));
+        Image imageKnight = new Image(gameView.findImageFigure("white_knight"));
 
         Label title = new Label(Text.TRANSFORM_PAWN, Settings.gdxGame.getLabelSkin());
         title.setFontScale(0.5f);
@@ -257,7 +263,9 @@ public class DialogView {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 Settings.SOUNDS.playClick();
-                gameView.updateFigure(pawn, movePawn, Queen.class);
+                gameController.updatePawn(move, BoardMatrix.QUEEN);
+                gameController.unblockGame();
+                gameView.clearMoves();
                 dialog.hide();
                 dialog.setVisible(false);
             }
@@ -274,7 +282,9 @@ public class DialogView {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 Settings.SOUNDS.playClick();
-                gameView.updateFigure(pawn, movePawn, Rook.class);
+                gameController.updatePawn(move, BoardMatrix.ROOK);
+                gameController.unblockGame();
+                gameView.clearMoves();
                 dialog.hide();
                 dialog.setVisible(false);
             }
@@ -291,7 +301,9 @@ public class DialogView {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 Settings.SOUNDS.playClick();
-                gameView.updateFigure(pawn, movePawn, Bishop.class);
+                gameController.updatePawn(move, BoardMatrix.BISHOP);
+                gameController.unblockGame();
+                gameView.clearMoves();
                 dialog.hide();
                 dialog.setVisible(false);
             }
@@ -308,7 +320,9 @@ public class DialogView {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 Settings.SOUNDS.playClick();
-                gameView.updateFigure(pawn, movePawn, Knight.class);
+                gameController.updatePawn(move, BoardMatrix.KNIGHT);
+                gameController.unblockGame();
+                gameView.clearMoves();
                 dialog.hide();
                 dialog.setVisible(false);
             }
@@ -324,8 +338,8 @@ public class DialogView {
         dialog.row();
 
         addDialogHandler(dialog, () -> {
+            gameController.unblockGame();
             dialog.hide();
-            Settings.controller.unblockGame();
         });
 
         stage.addActor(dialog);
@@ -335,7 +349,7 @@ public class DialogView {
      * ReplayDialog
      * */
     public void showReplayGameDialog() {
-        Settings.controller.blockGame();
+        gameController.blockGame();
 
         QuestionDialog questionDialog = new QuestionDialog(Settings.gdxGame.getUIKit());
         questionDialog.setPosition(Orientation.replayDialogX, Orientation.replayDialogY);
@@ -347,7 +361,7 @@ public class DialogView {
                     public void changed(ChangeEvent event, Actor actor) {
                         Settings.SOUNDS.playClick();
                         questionDialog.hide();
-                        Settings.controller.unblockGame();
+                        gameController.unblockGame();
                     }
                 })
                 .setQuestion(Text.REPLAY_TEXT)
@@ -355,9 +369,12 @@ public class DialogView {
                     @Override
                     public void changed(ChangeEvent event, Actor actor) {
                         Settings.SOUNDS.playClick();
-                        Settings.controller.removeSavedGame();
-                        Settings.gdxGame.goToGame(gameView);
-                        Settings.controller.unblockGame();
+                        gameController.clearSavedGame();
+                        gameController.createNewGame();
+                        questionDialog.hide();
+                        gameController.unblockGame();
+
+                        stopResultSounds();
                     }
                 })
                 .setNegative(Text.CANCEL, new ChangeListener() {
@@ -365,7 +382,7 @@ public class DialogView {
                     public void changed(ChangeEvent event, Actor actor) {
                         Settings.SOUNDS.playClick();
                         questionDialog.hide();
-                        Settings.controller.unblockGame();
+                        gameController.unblockGame();
                     }
                 })
                 .build();
@@ -377,7 +394,7 @@ public class DialogView {
      * MenuDialog
      * */
     public Dialog showMenuDialog() {
-        Settings.controller.blockGame();
+        gameController.blockGame();
 
         Dialog dialog = new Dialog("", Settings.gdxGame.getUIKit());
         dialog.setPosition(Orientation.menuDialogX, Orientation.menuDialogY);
@@ -393,7 +410,7 @@ public class DialogView {
             public void changed(ChangeEvent event, Actor actor) {
                 Settings.SOUNDS.playClick();
                 dialog.hide();
-                Settings.controller.unblockGame();
+                gameController.unblockGame();
             }
         });
 
@@ -407,7 +424,7 @@ public class DialogView {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 Settings.SOUNDS.playClick();
-                Settings.gdxGame.goToMenu(gameView, true);
+                gameController.goToMenu(gameView, true);
 
                 stopResultSounds();
             }
@@ -419,7 +436,7 @@ public class DialogView {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 Settings.SOUNDS.playClick();
-                Settings.gdxGame.goToMenu(gameView, false);
+                gameController.goToMenu(gameView, false);
 
                 stopResultSounds();
             }
@@ -433,7 +450,7 @@ public class DialogView {
                 Settings.SOUNDS.playClick();
                 dialog.hide();
                 dialog.setVisible(false);
-                Settings.controller.unblockGame();
+                gameController.unblockGame();
             }
         });
 
@@ -482,7 +499,7 @@ public class DialogView {
      * DescriptionDialog
      * */
     public void showDescriptionDialog() {
-        Settings.controller.blockGame();
+        gameController.blockGame();
 
         descriptionDialog = new Dialog("", Settings.gdxGame.getDialogSkin(), "transparent_rect");
         descriptionDialog.setPosition(Orientation.descriptionDialogX, Orientation.descriptionDialogY);
@@ -493,7 +510,7 @@ public class DialogView {
         Label title = new Label(Text.TITLE, Settings.gdxGame.getLabelSkin());
         title.setFontScale(0.7f);
 
-        Label levelGame = new Label(Settings.controller.getLevel().toString(), Settings.gdxGame.getLabelSkin());
+        Label levelGame = new Label(gameController.getLevel().toString(), Settings.gdxGame.getLabelSkin());
         levelGame.setFontScale(0.5f);
 
         descriptionDialog.getTitleTable().add(chessLog).padRight(370).padTop(100).size(80, 80);
@@ -502,7 +519,7 @@ public class DialogView {
 
         stage.addActor(descriptionDialog);
         addDialogHandler(descriptionDialog, () -> {
-            Settings.controller.unblockGame();
+            gameController.unblockGame();
             descriptionDialog.hide();
         });
     }

@@ -15,13 +15,6 @@ public class SaveData {
         accountHandler = Gdx.files.external("account.dat");
     }
 
-    public Game cloneGame(Game game) {
-        try {
-            return (Game) deserialize(serialize(game));
-        } catch (IOException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-    }
     public void saveAccount(Account account) {
         try {
             accountHandler.writeBytes(serialize(account), false);
@@ -34,10 +27,16 @@ public class SaveData {
         if (!accountHandler.exists()) return null;
         try {
             return (Account) deserialize(accountHandler.readBytes());
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
             return null;
-        } catch (ClassNotFoundException e) {
-            return null;
+        }
+    }
+
+    public Game cloneGame(Game game) {
+        try {
+            return (Game) deserialize(serialize(game));
+        } catch (IOException | ClassNotFoundException e) {
+            throw new RuntimeException(e);
         }
     }
 

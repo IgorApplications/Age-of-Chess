@@ -3,17 +3,16 @@ package com.iapp.chess.model;
 import com.iapp.chess.util.Text;
 
 public enum Color {
-    BLACK(Text.BLACK),
-    WHITE(Text.WHITE);
+    BLACK(Text.BLACK), WHITE(Text.WHITE);
 
-    private String color;
+    private String title;
 
-    Color(String color) {
-        this.color = color;
+    Color(String title) {
+        this.title = title;
     }
 
     @Override
     public String toString() {
-        return color;
+        return title;
     }
 }

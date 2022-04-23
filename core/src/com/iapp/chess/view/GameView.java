@@ -11,43 +11,44 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
-import com.iapp.chess.controller.Controller;
+import com.iapp.chess.controller.GameController;
 import com.iapp.chess.controller.Level;
 import com.iapp.chess.model.*;
-import com.iapp.chess.util.FigureSet;
-import com.iapp.chess.util.Orientation;
-import com.iapp.chess.util.Settings;
-import com.iapp.chess.util.Text;
+import com.iapp.chess.util.*;
 
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Arrays;
 
 import static com.badlogic.gdx.scenes.scene2d.actions.Actions.fadeIn;
 
 public class GameView implements Screen {
 
-    private DialogView dialogView;
+    private GameController gameController;
     private SpriteBatch batch;
     private OrthographicCamera camera;
-    private ShapeRenderer renderer;
+    private final ShapeRenderer renderer;
+
+    private boolean drawableOutlineFigure = true;
+    private boolean drawableOutlineFelledFigure = true;
+    private boolean drawableHintMoves = true;
+    private boolean drawableHintCastle = true;
+    private boolean drawableHintCheck = true;
+    private boolean drawableGreenCross = true;
 
     private Stage stage;
-    private Label countMoves;
-    private Label aiMove;
+    private Label countTurns;
 
-    private TextureAtlas figures;
-    private TextureAtlas.AtlasRegion background;
-    private TextureAtlas.AtlasRegion board;
-    private TextureAtlas.AtlasRegion greenFrame;
-    private TextureAtlas.AtlasRegion yellowFrame;
-    private TextureAtlas.AtlasRegion redFrame;
-    private TextureAtlas.AtlasRegion blueFrame;
+    private TextureAtlas figureSet;
+    private final TextureAtlas.AtlasRegion background;
+    private final TextureAtlas.AtlasRegion board;
+    private final TextureAtlas.AtlasRegion greenFrame;
+    private final TextureAtlas.AtlasRegion yellowFrame;
+    private final TextureAtlas.AtlasRegion redFrame;
+    private final TextureAtlas.AtlasRegion blueFrame;
 
-    private final List<Move> moves = new CopyOnWriteArrayList<>();
-    private List<FigureView> figureViews = new CopyOnWriteArrayList<>();
+    private final Array<Move> moves = new Array<>();
     private Move blueFrameMove;
-    private boolean canCutFigures = true;
 
     private FigureView chosenFigure;
     private FigureView checkKing;
@@ -69,28 +70,19 @@ public class GameView implements Screen {
         blueFrame = Settings.gdxGame.findRegion("blue_frame");
 
         if (Settings.account.getChosenFigureSet() == FigureSet.STANDARD) {
-            figures = Settings.gdxGame.getStandardFigures();
+            figureSet = Settings.gdxGame.getStandardFigures();
         } else if (Settings.account.getChosenFigureSet() == FigureSet.MODE) {
-            figures = Settings.gdxGame.getModeFigures();
+            figureSet = Settings.gdxGame.getModeFigures();
         }
     }
 
-    public void initGUI(Controller controller) {
+    public void initGUI(GameController gameController) {
+        this.gameController = gameController;
         initStage();
-        initFigures();
+        gameController.initViewFigures(figureSet);
 
-        dialogView = new DialogView(this, stage);
-
-        King king = controller.findCheckKing();
-        if (king != null) drawCheckKing(findFigure(king.getX(), king.getY()));
-    }
-
-    public DialogView getDialogView() {
-        return dialogView;
-    }
-
-    public void setDialogView(DialogView dialogView) {
-        this.dialogView = dialogView;
+        DialogView dialogView = new DialogView(gameController,this, stage);
+        gameController.setDialogView(dialogView);
     }
 
     public void setCamera(OrthographicCamera camera) {
@@ -109,25 +101,25 @@ public class GameView implements Screen {
         this.batch = batch;
     }
 
-    public void setFigureViews(List<FigureView> figureViews) {
-        this.figureViews = figureViews;
+    public Array<Move> getMoves() {
+        return moves;
     }
 
-    public List<FigureView> getFigureViews() {
-        return figureViews;
+    public TextureAtlas getFigureSet() {
+        return figureSet;
     }
 
-    public void setCanCutFigures(boolean canCutFigures) {
-        this.canCutFigures = canCutFigures;
+    public Stage getStage() {
+        return stage;
     }
 
     /**
      * draw methods
      * */
 
-    public void drawMoves(List<Move> moves) {
-        this.moves.clear();
-        this.moves.addAll(moves);
+    public void drawMoves(Array<Move> newMoves) {
+        moves.clear();
+        moves.addAll(newMoves);
     }
 
     public void clearMoves() {
@@ -142,12 +134,20 @@ public class GameView implements Screen {
         blueFrameMove = null;
     }
 
+    public Move getBlueHint() {
+        return blueFrameMove;
+    }
+
     public void drawCheckKing(FigureView checkKing) {
         this.checkKing = checkKing;
     }
 
     public void clearCheckKing() {
         checkKing = null;
+    }
+
+    public FigureView getCheckKing() {
+        return checkKing;
     }
 
     public void drawGreenCross(FigureView figureGreenCross) {
@@ -162,46 +162,94 @@ public class GameView implements Screen {
         this.chosenFigure = chosenFigure;
     }
 
-    public void clearChosenFigure() {
+    public void unselectChosenFigure() {
         chosenFigure = null;
+    }
+
+    /**
+     * Drawable methods
+     * */
+    public boolean isDrawableOutlineFigure() {
+        return drawableOutlineFigure && !Settings.account.isBlockedOutlineFigure();
+    }
+
+    public void setDrawableOutlineFigure(boolean drawableOutlineFigure) {
+        this.drawableOutlineFigure = drawableOutlineFigure;
+    }
+
+    public boolean isDrawableOutlineFelledFigure() {
+        return drawableOutlineFelledFigure && !Settings.account.isBlockedOutlineFelledFigure();
+    }
+
+    public void setDrawableOutlineFelledFigure(boolean drawableOutlineFelledFigure) {
+        this.drawableOutlineFelledFigure = drawableOutlineFelledFigure;
+    }
+
+    public boolean isDrawableHintMoves() {
+        return drawableHintMoves && !Settings.account.isBlockedHintMoves();
+    }
+
+    public void setDrawableHintMoves(boolean drawableHintMoves) {
+        this.drawableHintMoves = drawableHintMoves;
+    }
+
+    public boolean isDrawableHintCastle() {
+        return drawableHintCastle && !Settings.account.isBlockedHintCastle();
+    }
+
+    public void setDrawableHintCastle(boolean drawableHintCastle) {
+        this.drawableHintCastle = drawableHintCastle;
+    }
+
+    public boolean isDrawableHintCheck() {
+        return drawableHintCheck && !Settings.account.isBlockedHintCheck();
+    }
+
+    public void setDrawableHintCheck(boolean drawableHintCheck) {
+        this.drawableHintCheck = drawableHintCheck;
+    }
+
+    public boolean isDrawableGreenCross() {
+        return drawableGreenCross && !Settings.account.isBlockedGreenCross();
+    }
+
+    public void setDrawableGreenCross(boolean drawableHintGreenCross) {
+        this.drawableGreenCross = drawableHintGreenCross;
     }
 
     @Override
     public void show() {
-        dialogView.showStartDescriptionDialog();
+        gameController.getDialogView().showStartDescriptionDialog();
     }
 
     @Override
     public void render(float delta) {
         camera.update();
-
         batch.setProjectionMatrix(camera.combined);
+
         batch.begin();
         batch.draw(background, 0, 0, Orientation.cameraWidth, Orientation.cameraHeight);
         batch.draw(board, Orientation.boardX, Orientation.boardY, Orientation.boardWidth, Orientation.boardHeight);
-        figureViews.forEach(FigureView::draw);
+        Arrays.stream(gameController.getFigureViews()).forEach(f -> f.draw(batch));
+        drawRedHint();
+        drawGreenHint();
+        drawGreenCross();
+        drawYellowHint();
+        drawBlueHint();
         batch.end();
 
+        renderer.begin(ShapeRenderer.ShapeType.Filled);
         if (Settings.account.getOrientationType() == Orientation.Type.VERTICAL) drawLines();
-        drawRedHint();
-        if (!isAnyFigureDoMove()) drawGreenHint();
         drawMoves();
-        drawGreenCross();
-        drawBlueFrame();
+        renderer.end();
 
-        if (chosenFigure != null && !Settings.controller.isBlockedGame()) chosenFigure.showMoves();
-        if (Gdx.input.isTouched() && !Settings.controller.isBlockedGame()) processingTouchFigures();
+        if (chosenFigure != null && !gameController.isBlockedGame()) chosenFigure.showMoves(gameController, this);
+        if (Gdx.input.isTouched() && !gameController.isBlockedGame()) processingTouchFigures();
 
-        long turn = Settings.controller.getTurn();
-        if (turn != -1) {
-            countMoves.setText(turn + ". " + Settings.controller.defineColorMove());
-        }
-
-        if (Settings.controller.isAIMakesMove()) {
-            aiMove.setText(Text.MOVE_AI);
-        } else {
-            aiMove.setText("");
-        }
+        String separator;
+        if (gameController.isAIMakeMove()) separator = "... ";
+        else separator = ". ";
+        countTurns.setText(gameController.getTurn() + separator + gameController.getColorMove());
 
         stage.act(delta);
         stage.draw();
@@ -213,7 +261,10 @@ public class GameView implements Screen {
     }
 
     @Override
-    public void pause() {}
+    public void pause() {
+        gameController.updateSavedGame();
+        Settings.DATA.saveAccount(Settings.account);
+    }
 
     @Override
     public void resume() {}
@@ -229,69 +280,79 @@ public class GameView implements Screen {
         Settings.launcher.addOnFinish(null);
     }
 
-    public void cutDown(FigureView selfFigure, Move cutDownMove) {
-        if (!canCutFigures) return;
+    TextureAtlas.AtlasRegion findImageFigure(String region) {
+        return figureSet.findRegion(region);
+    }
 
-        for (FigureView figure : figureViews) {
-            if (figure != selfFigure && figure.getX() == cutDownMove.getX() && figure.getY() == cutDownMove.getY()) {
-                figure.setVisible(false);
+    void addImage(ImageButton imageButton, TextureAtlas.AtlasRegion region) {
+        Image image = new Image(region);
+        imageButton.center().add(image).padTop(3).padRight(2.7f);
+    }
+
+    void addImage(ImageButton imageButton, TextureAtlas.AtlasRegion region, float width, float height) {
+        Image image = new Image(region);
+        imageButton.center().add(image).size(width, height).padTop(3).padRight(2.7f);
+    }
+
+    /**
+     * Batch draw methods
+     * */
+    private void drawBlueHint() {
+        if (blueFrameMove != null) {
+            batch.draw(blueFrame, BoardMatrix.getPositionX(blueFrameMove.getMoveX()), BoardMatrix.getPositionY(blueFrameMove.getMoveY()),
+                    BoardMatrix.getSizeWidth(blueFrameMove.getMoveX()), BoardMatrix.getSizeHeight(blueFrameMove.getMoveY()));
+
+            if (Settings.account.isBlockedOutlineFigure()) {
+                batch.draw(greenFrame, BoardMatrix.getPositionX(chosenFigure.getX()), BoardMatrix.getPositionY(chosenFigure.getY()), BoardMatrix.getSizeWidth(chosenFigure.getX()), BoardMatrix.getSizeHeight(chosenFigure.getY()));
             }
         }
     }
 
-    public FigureView findFigure(int x, int y) {
-        for (FigureView figureView : figureViews) {
-            if (figureView.getX() == x && figureView.getY() == y && figureView.isVisible())
-                return figureView;
+    private void drawRedHint() {
+        if (checkKing != null && !checkKing.isMakesMove() && isDrawableHintCheck()) {
+            batch.draw(redFrame, BoardMatrix.getPositionX(checkKing.getX()), BoardMatrix.getPositionY(checkKing.getY()),
+                    BoardMatrix.getSizeWidth(checkKing.getX()), BoardMatrix.getSizeHeight(checkKing.getY()));
         }
-        throw new RuntimeException("Iapp: FigureView dont found");
     }
 
-    public FigureView findInVisibleFigure(Figure figure) {
-        for (FigureView figureView : figureViews) {
-            if (figureView.getType() == figure)
-                return figureView;
+    private void drawGreenHint() {
+        if (chosenFigure != null && !chosenFigure.isMakesMove() && isDrawableOutlineFigure()) {
+            if (!gameController.isCheckKing(chosenFigure)) {
+                batch.draw(greenFrame, BoardMatrix.getPositionX(chosenFigure.getX()), BoardMatrix.getPositionY(chosenFigure.getY()),
+                        BoardMatrix.getSizeWidth(chosenFigure.getX()), BoardMatrix.getSizeHeight(chosenFigure.getY()));
+            }
         }
-        throw new RuntimeException("Iapp: FigureView dont found");
     }
 
-    public void updateFigure(FigureView updatedPawn, Move move, Class<? extends Figure> updateType) {
-        Settings.controller.moveUser(updatedPawn, move);
-        Settings.controller.updatePawn(move.getX(), move.getY(), updatedPawn.getColor(), updateType);
-        updatedPawn.setType(Settings.controller.getFigure(move.getX(), move.getY()));
-        updateSprite(updatedPawn, updateType);
-
-        Settings.controller.unblockGame();
-
-        Settings.controller.moveAI();
-        Settings.controller.drawCheckKingIfFound();
-        drawRedHint();
-    }
-
-    private void updateSprite(FigureView figureView, Class<? extends Figure> updateType) {
-        if (Queen.class == updateType) {
-            setSprite(figureView, findFigure("black_queen"),  findFigure("white_queen"));
-        } else if (Rook.class == updateType) {
-            setSprite(figureView,  findFigure("black_rook"),  findFigure("white_rook"));
-        } else if (Bishop.class == updateType) {
-            setSprite(figureView,  findFigure("black_bishop"),  findFigure("white_bishop"));
-        } else if (Knight.class == updateType) {
-            setSprite(figureView,  findFigure("black_knight"),  findFigure("white_knight"));
+    private void drawYellowHint() {
+        for (Move move : moves) {
+            if (gameController.isThereFigure(move) && isDrawableOutlineFelledFigure()) {
+                batch.draw(yellowFrame, BoardMatrix.getPositionX(move.getMoveX()), BoardMatrix.getPositionY(move.getMoveY()),
+                        BoardMatrix.getSizeWidth(move.getMoveX()), BoardMatrix.getSizeHeight(move.getMoveY()));
+            }
         }
-        else throw new RuntimeException("Iapp: Try update Sprite figure. It's new class figure or it's Pawn class!");
     }
 
-    private void drawBlueFrame() {
-        if (blueFrameMove != null) {
-            batch.begin();
-            batch.draw(blueFrame, BoardMatrix.getPositionX(blueFrameMove.getX()), BoardMatrix.getPositionY(blueFrameMove.getY()),
-                    BoardMatrix.getSizeWidth(blueFrameMove.getX()), BoardMatrix.getSizeHeight(blueFrameMove.getY()));
-            batch.end();
+    private void drawGreenCross() {
+        if (figureGreenCross != null && isDrawableGreenCross()) {
+            batch.draw(Settings.gdxGame.findRegion("green_cross"), BoardMatrix.getPositionX(figureGreenCross.getLastX()),
+                    BoardMatrix.getPositionY(figureGreenCross.getLastY()), BoardMatrix.WIDTH, BoardMatrix.HEIGHT);
+        }
+    }
 
-            if (Settings.account.isBlockedOutlineFigure()) {
-                batch.begin();
-                batch.draw(greenFrame, BoardMatrix.getPositionX(chosenFigure.getX()), BoardMatrix.getPositionY(chosenFigure.getY()), BoardMatrix.getSizeWidth(chosenFigure.getX()), BoardMatrix.getSizeHeight(chosenFigure.getY()));
-                batch.end();
+    /**
+     * Render draw methods
+     * */
+    private void drawMoves() {
+        for (Move move : moves) {
+            if (gameController.isCastleMove(move) && isDrawableHintCastle()) {
+                renderer.setColor(0, 0, 1, 1);
+                renderer.circle(BoardMatrix.getPositionX(move.getMoveX()) + Orientation.moveMarginX,
+                        BoardMatrix.getPositionY(move.getMoveY()) + Orientation.moveMarginY, 6.5f);
+            } else if (isDrawableHintMoves() && !gameController.isThereFigure(move)) {
+                renderer.setColor(0, 0.5f, 0, 1);
+                renderer.circle(BoardMatrix.getPositionX(move.getMoveX()) + Orientation.moveMarginX,
+                        BoardMatrix.getPositionY(move.getMoveY()) + Orientation.moveMarginY, 6.5f);
             }
         }
     }
@@ -302,94 +363,30 @@ public class GameView implements Screen {
         renderer.setProjectionMatrix(camera.combined);
 
         renderer.setColor(0, 0, 0, 0.8f);
-        renderer.begin(ShapeRenderer.ShapeType.Filled);
         renderer.rect(0, Orientation.blackLineY, Orientation.cameraWidth, Orientation.blackLineHeight);
-        renderer.end();
 
         renderer.setColor(0.2f, 0.09f, 0, 1.0f);
-        renderer.begin(ShapeRenderer.ShapeType.Filled);
         renderer.rect(0, 0, Orientation.cameraWidth, 40);
-        renderer.end();
-    }
-
-    private void drawGreenHint() {
-        if (chosenFigure != null && Settings.account.isDrawableOutlineFigure()) {
-            if (!isCheckKing(chosenFigure)) {
-                batch.begin();
-                batch.draw(greenFrame, BoardMatrix.getPositionX(chosenFigure.getX()), BoardMatrix.getPositionY(chosenFigure.getY()), BoardMatrix.getSizeWidth(chosenFigure.getX()), BoardMatrix.getSizeHeight(chosenFigure.getY()));
-                batch.end();
-            }
-        }
-    }
-
-    private boolean isCheckKing(FigureView figureView) {
-        if (checkKing != null && figureView.getX() == checkKing.getX() && figureView.getY() == checkKing.getY())
-            return true;
-        return false;
-    }
-
-    private void drawRedHint() {
-        if (checkKing != null && Settings.account.isDrawableHintCheck()) {
-            batch.begin();
-            batch.draw(redFrame, BoardMatrix.getPositionX(checkKing.getX()), BoardMatrix.getPositionY(checkKing.getY()), BoardMatrix.getSizeWidth(checkKing.getX()), BoardMatrix.getSizeHeight(checkKing.getY()));
-            batch.end();
-        }
-    }
-
-    private void drawMoves() {
-        for (Move move : moves) {
-            if (!(Settings.controller.getFigure(move.getX(), move.getY()) instanceof Cage) && Settings.account.isDrawableOutlineFelledFigure()) {
-                int moveX = move.getX();
-                int moveY = move.getY();
-                batch.begin();
-                batch.draw(yellowFrame, BoardMatrix.getPositionX(moveX), BoardMatrix.getPositionY(moveY), BoardMatrix.getSizeWidth(moveX), BoardMatrix.getSizeHeight(moveY));
-                batch.end();
-            } else if (move.isCastlingMove() && Settings.account.isDrawableHintCastle()) {
-                renderer.setColor(0.25f, 0.41f, 1, 1);
-                renderer.begin(ShapeRenderer.ShapeType.Filled);
-                renderer.circle(BoardMatrix.getPositionX(move.getX()) + Orientation.moveMarginX, BoardMatrix.getPositionY(move.getY()) + Orientation.moveMarginY, 6.5f);
-                renderer.end();
-            } else if (Settings.account.isDrawableHintMoves()) {
-                renderer.setColor(0, 0.5f, 0, 1);
-                renderer.begin(ShapeRenderer.ShapeType.Filled);
-                renderer.circle(BoardMatrix.getPositionX(move.getX()) + Orientation.moveMarginX, BoardMatrix.getPositionY(move.getY()) + Orientation.moveMarginY, 6.5f);
-                renderer.end();
-            };
-        }
-    }
-
-    private void drawGreenCross() {
-        if (figureGreenCross != null && Settings.account.isDrawableGreenCross()) {
-            batch.begin();
-            batch.draw(Settings.gdxGame.findRegion("green_cross"),
-                    BoardMatrix.getPositionX(figureGreenCross.getLastX()), BoardMatrix.getPositionY(figureGreenCross.getLastY()), BoardMatrix.WIDTH, BoardMatrix.HEIGHT);
-            batch.end();
-        }
     }
 
     private void processingTouchFigures() {
-        for (FigureView figureView : figureViews) {
+        for (FigureView figureView : gameController.getFigureViews()) {
             if (!figureView.isVisible()) continue;
 
-            Color aiColor = Settings.controller.getAIColor();
-            Color userColor  = Settings.controller.getUserColor();
-            if (figureView.isTouched(camera) &&
-                    ((figureView.getColor() == aiColor && Settings.controller.defineColorMove() == aiColor)
-                            || (figureView.getColor() == userColor && Settings.controller.defineColorMove() == userColor))) {
-                chosenFigure = figureView;
-                if (blueFrameMove != null && !Settings.account.isDrawableHintMoves()) {
-                    clearBlueHint();
-                    Settings.account.setDrawableHintMoves(true);
+            if (figureView.isTouched(camera) && gameController.getColor(figureView) == gameController.getColorMove()) {
+
+                if (blueFrameMove != null && !isDrawableHintMoves()) {
+                    setDrawableHintMoves(true);
+                    setDrawableHintCastle(true);
+                    drawMoves(gameController.getMoves(figureView.getX(), figureView.getY()));
+                } else if (figureView != chosenFigure) {
+                    drawMoves(gameController.getMoves(figureView.getX(), figureView.getY()));
                 }
+
+                chosenFigure = figureView;
+                clearBlueHint();
             }
         }
-    }
-
-    private boolean isAnyFigureDoMove() {
-        for (FigureView figureView : figureViews) {
-            if (figureView.isDoMove()) return true;
-        }
-        return false;
     }
 
     private void initStage() {
@@ -401,20 +398,16 @@ public class GameView implements Screen {
     }
 
     private void initLabels() {
-        countMoves = new Label("", Settings.gdxGame.getLabelSkin());
-        countMoves.setText("1. " + Settings.controller.defineColorMove());
-        countMoves.setFontScale(Orientation.labelCountMovesFontScale);
-        countMoves.setPosition(Orientation.labelCountMovesX, Orientation.labelCountMovesY);
-
-        aiMove = new Label("", Settings.gdxGame.getLabelSkin());
-        aiMove.setFontScale(Orientation.labelLevelFontScale);
-        aiMove.setPosition(Orientation.moveAIX, Orientation.moveAIY);
+        countTurns = new Label("", Settings.gdxGame.getLabelSkin());
+        countTurns.setText("1. " + gameController.getColorMove());
+        countTurns.setFontScale(Orientation.labelCountMovesFontScale);
+        countTurns.setPosition(Orientation.labelCountMovesX, Orientation.labelCountMovesY);
 
         Table header = new Table();
         header.setPosition(0, Orientation.headerY);
         header.setWidth(Orientation.cameraWidth);
 
-        Label level = new Label(Settings.controller.getLevel().toString(), Settings.gdxGame.getLabelSkin());
+        Label level = new Label(gameController.getLevel().toString(), Settings.gdxGame.getLabelSkin());
         level.setFontScale(Orientation.labelLevelFontScale);
 
         if (Settings.account.getOrientationType() == Orientation.Type.VERTICAL) {
@@ -423,14 +416,11 @@ public class GameView implements Screen {
             header.add(title).center().row();
             header.add(level).padTop(8).center();
         } else {
-            header.add(level).padLeft(30).center();
+            header.add(level).center();
         }
 
         stage.addActor(header);
-        stage.addActor(countMoves);
-        if (Settings.account.getChoiceLevel() != Level.TWO_PLAYERS) {
-            stage.addActor(aiMove);
-        }
+        stage.addActor(countTurns);
     }
 
     private Dialog onFinish;
@@ -444,11 +434,10 @@ public class GameView implements Screen {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 Settings.SOUNDS.playClick();
-
-                if (Settings.controller.getTurn() < 2) {
-                    Settings.gdxGame.goToMenu(GameView.this, false);
+                if (gameController.getTurn() < 2) {
+                    gameController.goToMenu(GameView.this, false);
                 } else {
-                    dialogView.showMenuDialog();
+                    gameController.getDialogView().showMenuDialog();
                 }
             }
         });
@@ -461,7 +450,7 @@ public class GameView implements Screen {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 Settings.SOUNDS.playClick();
-                dialogView.showReplayGameDialog();
+                gameController.getDialogView().showReplayGameDialog();
             }
         });
 
@@ -472,8 +461,9 @@ public class GameView implements Screen {
         buttonBack.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                if (Settings.controller.getLevel() == Level.TWO_PLAYERS) Settings.controller.cancelMove();
-                else Settings.controller.cancelTurn();
+                Settings.SOUNDS.playClick();
+                if (gameController.getLevel() == Level.TWO_PLAYERS) gameController.cancelMove();
+                else gameController.cancelTurn();
             }
         });
 
@@ -485,7 +475,7 @@ public class GameView implements Screen {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 Settings.SOUNDS.playClick();
-                dialogView.showDescriptionDialog();
+                gameController.getDialogView().showDescriptionDialog();
             }
         });
 
@@ -496,9 +486,8 @@ public class GameView implements Screen {
         buttonHint.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                if (Settings.controller.isBlockedGame()) return;
                 Settings.SOUNDS.playClick();
-                Settings.controller.showPromptingMove();
+                gameController.showHint();
             }
         });
 
@@ -509,69 +498,11 @@ public class GameView implements Screen {
         stage.addActor(buttonHint);
 
         Settings.launcher.addOnFinish(() -> Gdx.app.postRunnable(() -> {
-            if (Settings.controller.getTurn() < 2|| (onFinish != null && onFinish.isVisible())) {
-                Settings.gdxGame.goToMenu(GameView.this, false);
+            if (gameController.getTurn() < 2|| (onFinish != null && onFinish.isVisible())) {
+                gameController.goToMenu(GameView.this, false);
             } else {
-                onFinish = dialogView.showMenuDialog();
+                onFinish = gameController.getDialogView().showMenuDialog();
             }
         }));
-    }
-
-    public TextureAtlas.AtlasRegion findFigure(String region) {
-        return figures.findRegion(region);
-    }
-
-    private void initFigures() {
-        TextureAtlas.AtlasRegion imagePawnBlack = figures.findRegion("black_pawn");
-        TextureAtlas.AtlasRegion imagePawnWhite = figures.findRegion("white_pawn");
-
-        TextureAtlas.AtlasRegion imageRookBlack = figures.findRegion("black_rook");
-        TextureAtlas.AtlasRegion imageRookWhite = figures.findRegion("white_rook");
-
-        TextureAtlas.AtlasRegion imageKnightBlack = figures.findRegion("black_knight");
-        TextureAtlas.AtlasRegion imageKnightWhite = figures.findRegion("white_knight");
-
-        TextureAtlas.AtlasRegion imageBishopBlack = figures.findRegion("black_bishop");
-        TextureAtlas.AtlasRegion imageBishopWhite = figures.findRegion("white_bishop");
-
-        TextureAtlas.AtlasRegion imageQueenBlack = figures.findRegion("black_queen");
-        TextureAtlas.AtlasRegion imageQueenWhite = figures.findRegion("white_queen");
-
-        TextureAtlas.AtlasRegion imageKingBlack = figures.findRegion("black_king");
-        TextureAtlas.AtlasRegion imageKingWhite = figures.findRegion("white_king");
-
-        for (Figure figure : Settings.controller.getGameFigures()) {
-            if (figure instanceof Pawn) addFigure(imagePawnBlack, imagePawnWhite, figure);
-            else if (figure instanceof Rook) addFigure(imageRookBlack, imageRookWhite, figure);
-            else if (figure instanceof Knight) addFigure(imageKnightBlack, imageKnightWhite, figure);
-            else if (figure instanceof Bishop) addFigure(imageBishopBlack, imageBishopWhite, figure);
-            else if (figure instanceof Queen) addFigure(imageQueenBlack, imageQueenWhite, figure);
-            else addFigure(imageKingBlack, imageKingWhite, figure);
-        }
-    }
-
-    private void addFigure(TextureAtlas.AtlasRegion imageBlack, TextureAtlas.AtlasRegion imageWhite, Figure figure) {
-        if (figure.getColor() == Color.BLACK) {
-            FigureView figureBlack = new FigureView(this, batch, imageBlack, figure, Color.BLACK);
-            figureViews.add(figureBlack);
-        } else {
-            FigureView figureWhite = new FigureView(this, batch, imageWhite, figure, Color.WHITE);
-            figureViews.add(figureWhite);
-        }
-    }
-
-    void addImage(ImageButton imageButton, TextureAtlas.AtlasRegion region) {
-        Image image = new Image(region);
-        imageButton.center().add(image).padTop(3).padRight(2.7f);
-    }
-
-    void addImage(ImageButton imageButton, TextureAtlas.AtlasRegion region, float width, float height) {
-        Image image = new Image(region);
-        imageButton.center().add(image).size(width, height).padTop(3).padRight(2.7f);
-    }
-
-    public void setSprite(FigureView figureView, TextureAtlas.AtlasRegion imageBlack, TextureAtlas.AtlasRegion imageWhite) {
-        if (figureView.getColor() == Color.BLACK) figureView.setSprite(imageBlack);
-        else figureView.setSprite(imageWhite);
     }
 }
