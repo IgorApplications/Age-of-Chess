@@ -10,10 +10,9 @@ import com.iapp.chess.util.Settings;
 
 public class UIScrollPane extends Actor {
 
-    private Stage stage;
-    private ScrollPane scrollPane;
-
-    private Table content;
+    private final Stage stage;
+    private final ScrollPane scrollPane;
+    private final Table content;
 
     public UIScrollPane(Stage stage) {
         this.stage = stage;
@@ -31,8 +30,7 @@ public class UIScrollPane extends Actor {
     }
 
     @Override
-    public void draw(Batch batch, float parentAlpha) {
-    }
+    public void draw(Batch batch, float parentAlpha) {}
 
     @Override
     public void setSize(float width, float height) {

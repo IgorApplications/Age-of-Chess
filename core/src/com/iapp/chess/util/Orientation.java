@@ -118,21 +118,13 @@ public class Orientation {
     public static float uiDialogHeight;
 
     public void init(Type type) {
-        init(type, false);
-    }
-
-    public void init(Type type, boolean notInitWindow) {
-        if (!notInitWindow) {
-            initWindowOrientation(type);
-        }
+        initWindowOrientation(type);
         initCamera(type);
         initSplashScreen(type);
         initMainView(type);
         initGameView(type);
         initDialogView(type);
         initSettingsView(type);
-
-        Settings.gdxGame.getGdxCamera().setToOrtho(false, cameraWidth, cameraHeight);
     }
 
     public void initWindowOrientation(Type type) {

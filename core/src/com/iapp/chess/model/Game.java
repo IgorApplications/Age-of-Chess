@@ -21,7 +21,6 @@ public class Game implements Serializable {
     private Color colorMove = Color.WHITE;
     private BoardMatrix current;
     private final LinkedList<BoardMatrix> matrices;
-    private final MoveUtils moveUtils;
 
     public Game(Color upper) {
         this.upper = upper;
@@ -29,17 +28,15 @@ public class Game implements Serializable {
 
         current = new BoardMatrix(upper);
         matrices = new LinkedList<>();
-        moveUtils = new MoveUtils();
     }
 
     private Game(Color colorMove, Color upper, Color lower, BoardMatrix current,
-                 LinkedList<BoardMatrix> matrices, MoveUtils moveUtils) {
+                 LinkedList<BoardMatrix> matrices) {
         this.colorMove = colorMove;
         this.upper = upper;
         this.lower = lower;
         this.current = current;
         this.matrices = matrices;
-        this.moveUtils = moveUtils;
     }
 
     public Color getUpper() {
@@ -95,9 +92,10 @@ public class Game implements Serializable {
         Array<Move> moves = getFigureMoves(x, y);
 
         byte[] position = getKingPosition(colorMove);
-        if (isCheckKing(position[0], position[1]) || isKing(position[0], position[1])) {
-            return getMovesToSaveKing(moves);
+        if (isCheckKing(position[0], position[1]) || isKing(x, y)) {
+            moves = getMovesToSaveKing(moves);
         }
+
         return moves;
     }
 
@@ -275,7 +273,7 @@ public class Game implements Serializable {
             cloneMatrices.add(boardMatrix.cloneMatrix());
         }
 
-        return new Game(colorMove, upper, lower, current.cloneMatrix(), cloneMatrices, moveUtils);
+        return new Game(colorMove, upper, lower, current.cloneMatrix(), cloneMatrices);
     }
 
     public Color reverse(Color first) {
@@ -310,7 +308,7 @@ public class Game implements Serializable {
     private void addValidKnightMove(Array<Move> knightMoves, int x, int y, int moveX, int moveY) {
         Color color = getColor(moveX, moveY);
         if ((color != null && color != colorMove) || isCage(moveX, moveY)) {
-            knightMoves.add(moveUtils.getMove(x, y, moveX, moveY));
+            knightMoves.add(new Move(x, y, moveX, moveY));
         }
     }
 
@@ -320,7 +318,7 @@ public class Game implements Serializable {
 
         while (j < 8 && i < 8) {
             if (getColor(j, i) != colorMove) {
-                bishopMoves.add(moveUtils.getMove(x, y, j, i));
+                bishopMoves.add(new Move(x, y, j, i));
             }
 
             if (!isCage(j, i)) break;
@@ -333,7 +331,7 @@ public class Game implements Serializable {
         i = y - 1;
         while (j < 8 && i >= 0) {
             if (getColor(j, i) != colorMove) {
-                bishopMoves.add(moveUtils.getMove(x, y, j, i));
+                bishopMoves.add(new Move(x, y, j, i));
             }
 
             if (!isCage(j, i)) break;
@@ -346,7 +344,7 @@ public class Game implements Serializable {
         i = y + 1;
         while (j >= 0 && i < 8) {
             if (getColor(j, i) != colorMove) {
-                bishopMoves.add(moveUtils.getMove(x, y, j, i));
+                bishopMoves.add(new Move(x, y, j, i));
             }
 
             if (!isCage(j, i)) break;
@@ -359,7 +357,7 @@ public class Game implements Serializable {
         i = y - 1;
         while (j >= 0 && i >= 0 ) {
             if (getColor(j, i) != colorMove) {
-                bishopMoves.add(moveUtils.getMove(x, y, j, i));
+                bishopMoves.add(new Move(x, y, j, i));
             }
 
             if (!isCage(j, i)) break;
@@ -376,7 +374,7 @@ public class Game implements Serializable {
 
         for (int i = y - 1; i >= 0; i--) {
             if (getColor(x, i) != colorMove) {
-                rookMoves.add(moveUtils.getMove(x, y, x, i));
+                rookMoves.add(new Move(x, y, x, i));
             }
 
             if (!isCage(x, i)) break;
@@ -384,7 +382,7 @@ public class Game implements Serializable {
 
         for (int i = y + 1; i < 8; i++) {
             if (getColor(x, i) != colorMove) {
-                rookMoves.add(moveUtils.getMove(x, y, x, i));
+                rookMoves.add(new Move(x, y, x, i));
             }
 
             if (!isCage(x, i)) break;
@@ -392,7 +390,7 @@ public class Game implements Serializable {
 
         for (int i = x - 1; i >= 0; i--) {
             if (getColor(i, y) != colorMove) {
-                rookMoves.add(moveUtils.getMove(x, y, i, y));
+                rookMoves.add(new Move(x, y, i, y));
             }
 
             if (!isCage(i, y)) break;
@@ -400,7 +398,7 @@ public class Game implements Serializable {
 
         for (int i = x + 1; i < 8; i++) {
             if (getColor(i, y) != colorMove) {
-                rookMoves.add(moveUtils.getMove(x, y, i, y));
+                rookMoves.add(new Move(x, y, i, y));
             }
 
             if (!isCage(i, y)) break;
@@ -432,21 +430,21 @@ public class Game implements Serializable {
         Color figureColor = getColor(x, y);
 
         if (current.getFigure(x,y + direction) == BoardMatrix.CAGE) {
-            pawnMoves.add(moveUtils.getMove(x, y, x, y + direction));
+            pawnMoves.add(new Move(x, y, x, y + direction));
 
             if ((y == 1 || y == 6) && current.getFigure(x,y + direction * 2) == BoardMatrix.CAGE) {
-                pawnMoves.add(moveUtils.getMove(x, y, x, y + direction * 2));
+                pawnMoves.add(new Move(x, y, x, y + direction * 2));
             }
         }
 
         Color left = getColor(x - 1, y + direction);
         if (left != null && left != colorMove) {
-            pawnMoves.add(moveUtils.getMove(x, y, x - 1, y + direction));
+            pawnMoves.add(new Move(x, y, x - 1, y + direction));
         }
 
         Color right = getColor(x + 1, y + direction);
         if (right != null && right != colorMove) {
-            pawnMoves.add(moveUtils.getMove(x, y, x + 1, y + direction));
+            pawnMoves.add(new Move(x, y, x + 1, y + direction));
         }
 
         if (((y == 3 && figureColor == lower) || (y == 4 && figureColor == upper))
@@ -457,11 +455,11 @@ public class Game implements Serializable {
             if ((move.getFigureY() + -direction * 2) == move.getMoveY()) {
 
                 if (x - 1 == move.getMoveX() && y == move.getMoveY()) {
-                    pawnMoves.add(moveUtils.getMove(x, y, x - 1, y + direction));
+                    pawnMoves.add(new Move(x, y, x - 1, y + direction));
                 }
 
                 if (x + 1 == move.getMoveX() && y == move.getMoveY()) {
-                    pawnMoves.add(moveUtils.getMove(x, y, x + 1, y + direction));
+                    pawnMoves.add(new Move(x, y, x + 1, y + direction));
                 }
             }
         }
@@ -483,7 +481,7 @@ public class Game implements Serializable {
 
     private void addKingMove(Array<Move> moves, int figureX, int figureY, int x, int y, int sign) {
         if (current.getFigure(x, y) * sign >= 1 || current.getFigure(x, y) == BoardMatrix.CAGE) {
-            moves.add(moveUtils.getMove(figureX, figureY, x, y));
+            moves.add(new Move(figureX, figureY, x, y));
         }
     }
 
@@ -496,19 +494,19 @@ public class Game implements Serializable {
         if ((kingColor == upper && figureY == 0) || (kingColor == lower && figureY == 7)) {
             if (figureX == 3) {
                 if (checkTreePosition(figureX, figureY, -1)) {
-                    checkMoves.add(moveUtils.getMove(figureX, figureY, figureX - 2, figureY));
+                    checkMoves.add(new Move(figureX, figureY, figureX - 2, figureY));
                 }
 
                 if (checkFourPosition(figureX, figureY, 1)) {
-                    checkMoves.add(moveUtils.getMove(figureX, figureY, figureX + 2, figureY));
+                    checkMoves.add(new Move(figureX, figureY, figureX + 2, figureY));
                 }
             } else if (figureX == 4) {
                 if (checkFourPosition(figureX, figureY, -1)) {
-                    checkMoves.add(moveUtils.getMove(figureX, figureY, figureX - 2, figureY));
+                    checkMoves.add(new Move(figureX, figureY, figureX - 2, figureY));
                 }
 
                 if (checkTreePosition(figureX, figureY, 1)) {
-                    checkMoves.add(moveUtils.getMove(figureX, figureY, figureX + 2, figureY));
+                    checkMoves.add(new Move(figureX, figureY, figureX + 2, figureY));
                 }
             }
         }
@@ -533,7 +531,7 @@ public class Game implements Serializable {
     }
 
     private Move findChange() {
-        if (matrices.size() == 1) return moveUtils.getMove(-1, -1, -1, -1);
+        if (matrices.size() == 1) return new Move(-1, -1, -1, -1);
 
         byte[][] current = getMatrix();
         byte[][] last = getLastMatrix(1);
@@ -553,7 +551,7 @@ public class Game implements Serializable {
                 }
             }
         }
-        return moveUtils.getMove(figureX, figureY, moveX, moveY);
+        return new Move(figureX, figureY, moveX, moveY);
     }
 
     private Array<Move> getMovesToSaveKing(Array<Move> moves) {

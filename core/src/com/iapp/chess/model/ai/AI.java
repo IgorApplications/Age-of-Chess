@@ -4,7 +4,10 @@ import com.badlogic.gdx.utils.Array;
 import com.iapp.chess.model.Color;
 import com.iapp.chess.model.Game;
 import com.iapp.chess.model.Move;
+import com.iapp.chess.util.Pair;
+import jdk.nashorn.internal.ir.IdentNode;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,6 +15,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class AI {
 
@@ -119,7 +123,8 @@ public class AI {
     public Color getUserColor() {
         return userColor;
     }
-    private AtomicInteger countMinimaxThreads = new AtomicInteger(0);
+
+    private AtomicInteger countMinimaxThreads;
     private Map<Move, Integer> minimaxResult;
 
     public void getMove(Game game, AIListener callback) {
@@ -129,13 +134,10 @@ public class AI {
 
         Runnable task = () -> {
             try {
-                long start = System.currentTimeMillis();
-
                 int bestMove = Integer.MIN_VALUE;
                 Move virtualAIMove = null;
 
                 for (Move move : getAllMoves(cloneGame, aiColor)) {
-
                     cloneGame.makeMove(move);
                     getParallelMiniMax(cloneGame.cloneGame(), move, depth - 1, -10_000, 10_000, userColor);
                     countMinimaxThreads.incrementAndGet();
@@ -146,7 +148,8 @@ public class AI {
                     Thread.yield();
                     try {
                         Thread.sleep(100);
-                    } catch (InterruptedException ignored) {
+                    } catch (InterruptedException e) {
+                        e.printStackTrace(System.out);
                         return;
                     }
                 }
@@ -161,10 +164,6 @@ public class AI {
                 if (virtualAIMove != null) {
                     callback.finish(virtualAIMove);
                 }
-
-                long end = System.currentTimeMillis();
-                System.out.println("The AI made move in " + (end - start) + " millis");
-
             } catch (RejectedExecutionException e) {
                 e.printStackTrace(System.out);
             }
@@ -201,11 +200,12 @@ public class AI {
         return totalEvaluation;
     }
 
-    public float evaluateFigure(Game game, int x, int y) {
-
+    private float evaluateFigure(Game game, int x, int y) {
         float eval = 0;
+
         if (game.isPawn(x, y)) {
-            eval = 10 + (game.getColor(x, y) == Color.BLACK ? pawnEvalBlack[y][x] : pawnEvalWhite[y][x]);
+            if (y == 7 || y == 0) eval =  90 + evalQueen[y][x];
+            else eval = 10 + (game.getColor(x, y) == Color.BLACK ? pawnEvalBlack[y][x] : pawnEvalWhite[y][x]);
         } else if (game.isRook(x, y)) {
             eval = 50 + (game.getColor(x, y) == Color.BLACK ? rookEvalBlack[y][x] : rookEvalWhite[y][x]);
         } else if (game.isKnight(x, y)) {
@@ -221,7 +221,7 @@ public class AI {
         return game.getColor(x, y) == aiColor ? eval : -eval;
     }
 
-    public int getMiniMax(Game cloneGame, int depth, int alpha, int beta, Color color) throws InterruptedException  {
+    private int getMiniMax(Game cloneGame, int depth, int alpha, int beta, Color color) throws InterruptedException  {
         if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
 
         if (depth == 0) {
@@ -242,7 +242,6 @@ public class AI {
 
                 cloneGame.cancelMove();
 
-
                 alpha = Math.max(alpha, bestMove);
                 if (beta <= alpha) {
                     return bestMove;
@@ -258,7 +257,6 @@ public class AI {
                 bestMove = Math.min(bestMove, value);
 
                 cloneGame.cancelMove();
-
             }
 
             beta = Math.min(beta, bestMove);
@@ -270,7 +268,7 @@ public class AI {
         return bestMove;
     }
 
-    public Array<Move> getAllMoves(Game game, Color color) {
+    private Array<Move> getAllMoves(Game game, Color color) {
         Array<Move> moves = new Array<>();
         byte[][] matrix = game.getMatrix();
 

@@ -11,13 +11,13 @@ import com.iapp.chess.util.Settings;
 
 public class UIDialog extends Actor {
 
-    private UIScrollPane uiScrollPane;
+    private final UIScrollPane uiScrollPane;
 
-    private TextureAtlas.AtlasRegion dialogUI;
-    private Texture grayLine;
-    private Texture whiteLine;
+    private final TextureAtlas.AtlasRegion dialogUI;
+    private final Texture grayLine;
+    private final Texture whiteLine;
 
-    private boolean grayLineVisible;
+    private final boolean grayLineVisible;
 
     private static final float MARGIN_DIALOG_X = 7;
     private static final float MARGIN_DIALOG_Y = 6;
@@ -38,6 +38,7 @@ public class UIDialog extends Actor {
 
     @Override
     public void setSize(float width, float height) {
+        System.out.println("SIZE updated!");
         uiScrollPane.setSize(width - MARGIN_DIALOG_X * 2, height - MARGIN_DIALOG_Y * 2);
 
         super.setSize(width, height);
@@ -45,6 +46,7 @@ public class UIDialog extends Actor {
 
     @Override
     public void setPosition(float x, float y) {
+        System.out.println("POSITION updated!");
         uiScrollPane.setPosition(x + MARGIN_DIALOG_X, y + MARGIN_DIALOG_Y);
 
         super.setPosition(x, y);
@@ -81,29 +83,14 @@ public class UIDialog extends Actor {
         uiScrollPane.getElements().add(group).colspan(15).fillX().expandX().height(30).padTop(marginTop).row();
     }
 
-    public void addMainTitle(Label title) {
-        Image line = new Image(whiteLine);
-        line.setSize(uiScrollPane.getWidth(), title.getHeight() + 10);
-        title.setSize(uiScrollPane.getWidth(), title.getHeight() + 10);
-
-        Group group = new Group();
-        group.addActor(line);
-        group.addActor(title);
-
-        uiScrollPane.getElements().add(group).colspan(15).fillY().fillX().expandX().height(title.getHeight()).row();
-    }
-
     public void addElement(String text, Actor actor) {
-        Group group = new Group();
-        group.addActor(actor);
-
         Label textElement = new Label(text, Settings.gdxGame.getLabelSkin(), "default");
         textElement.setFontScale(0.35f);
         textElement.setColor(Color.WHITE);
         textElement.setWrap(true);
 
         uiScrollPane.getElements().add(textElement).padRight(10).size(getWidth() / 2 - 30, 50).center();
-        uiScrollPane.getElements().add(group).center().padTop(33).row();
+        uiScrollPane.getElements().add(actor).size(35, 35).center().row();
     }
 
     public Cell<Group> addWhiteLine(Actor actor, float heightLine, float heightActor) {

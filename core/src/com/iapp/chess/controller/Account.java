@@ -19,7 +19,7 @@ public class Account implements Serializable {
     private Pair<Integer, Integer> windowSize;
 
     private Orientation.Type type;
-    private Level userLevel = Level.MASTER;
+    private Level userLevel = Level.NOVICE;
     private Level choiceLevel = Level.NOVICE;
 
     private final Level[] allLevels = Level.values();
@@ -44,6 +44,9 @@ public class Account implements Serializable {
     private boolean blockedSoundWin;
     private boolean blockedSoundWinMaster;
     private boolean blockedSoundLose;
+
+    private boolean showFPS;
+    private boolean showRAM;
 
     private transient Random random = new Random();
 
@@ -203,6 +206,26 @@ public class Account implements Serializable {
 
     public boolean isBlockedSoundLose() {
         return blockedSoundLose;
+    }
+
+    /**
+     * Debug methods
+     * */
+
+    public void setShowFPS(boolean showFPS) {
+        this.showFPS = showFPS;
+    }
+
+    public boolean isShowFPS() {
+        return showFPS;
+    }
+
+    public void setShowRAM(boolean showRAM) {
+        this.showRAM = showRAM;
+    }
+
+    public boolean isShowRAM() {
+        return showRAM;
     }
 
     /**

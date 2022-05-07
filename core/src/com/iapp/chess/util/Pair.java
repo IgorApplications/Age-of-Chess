@@ -7,8 +7,7 @@ public class Pair<K, V> implements Serializable {
     private K key;
     private V value;
 
-    public Pair() {
-    }
+    public Pair() {}
 
     public Pair(K k, V v) {
         this.key = k;

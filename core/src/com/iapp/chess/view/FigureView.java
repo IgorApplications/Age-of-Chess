@@ -11,7 +11,6 @@ import com.iapp.chess.controller.GameController;
 import com.iapp.chess.model.Move;
 import com.iapp.chess.util.CallListener;
 import com.iapp.chess.util.Orientation;
-import com.iapp.chess.util.Settings;
 
 import java.util.HashMap;
 import java.util.Map;

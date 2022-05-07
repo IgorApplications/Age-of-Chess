@@ -8,13 +8,13 @@ import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.scenes.scene2d.*;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
-import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.iapp.chess.controller.Level;
 import com.iapp.chess.controller.MenuController;
 import com.iapp.chess.standart_ui.ScoreBoard;
 import com.iapp.chess.standart_ui.UIDialog;
+import com.iapp.chess.util.ChangeListener;
 import com.iapp.chess.util.Orientation;
 import com.iapp.chess.util.Settings;
 import com.iapp.chess.util.Text;
@@ -34,6 +34,7 @@ public class MenuView implements Screen {
     private OrthographicCamera camera;
 
     private TextureAtlas.AtlasRegion background;
+    private boolean startView;
 
     public MenuView(MenuController menuController) {
         this.menuController = menuController;
@@ -47,8 +48,21 @@ public class MenuView implements Screen {
         initStage();
     }
 
+    public MenuView(MenuController menuController, boolean startView) {
+        this(menuController);
+        this.startView = startView;
+    }
+
     @Override
-    public void show() {}
+    public void show() {
+        if (Gdx.app.getType() == Application.ApplicationType.Desktop && startView) {
+            int windowWidth = Settings.account.getWindowSize().getKey();
+            int windowHeight = Settings.account.getWindowSize().getValue();
+
+            Gdx.graphics.setWindowedMode(windowWidth, windowHeight);
+            Settings.orientation.initWindowOrientation(Settings.account.getOrientationType());
+        }
+    }
 
     @Override
     public void render(float delta) {
@@ -73,6 +87,7 @@ public class MenuView implements Screen {
     @Override
     public void pause() {
         Settings.DATA.saveAccount(Settings.account);
+        Settings.DATA.appendLogs();
     }
 
     @Override
@@ -130,7 +145,7 @@ public class MenuView implements Screen {
         buttonPlay.getLabelCell().padLeft(10);
         buttonPlay.addListener(new ChangeListener() {
             @Override
-            public void changed(ChangeEvent event, Actor actor) {
+            public void onChanged(ChangeEvent event, Actor actor) {
                 if (buttonGroup.getChecked() != null) {
                     menuController.goToGame(MenuView.this, stage);
                 }
@@ -142,7 +157,7 @@ public class MenuView implements Screen {
         buttonSettings.getLabelCell().padLeft(20);
         buttonSettings.addListener(new ChangeListener() {
             @Override
-            public void changed(ChangeEvent event, Actor actor) {
+            public void onChanged(ChangeEvent event, Actor actor) {
                 Settings.gdxGame.goToScreen(stage, Actions.run(() -> {
                     SettingsView settingsView = new SettingsView(menuController);
                     Settings.gdxGame.setScreen(settingsView);
@@ -163,7 +178,7 @@ public class MenuView implements Screen {
 
             levelButton.addListener(new ChangeListener() {
                 @Override
-                public void changed(ChangeEvent event, Actor actor) {
+                public void onChanged(ChangeEvent event, Actor actor) {
                     Settings.account.setChoiceLevel(level);
                     if (infoLevel != null) {
                         infoLevel.setText(level.toString());

@@ -4,6 +4,7 @@ import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -48,7 +49,6 @@ public class SplashScreen implements Screen {
         logo1 = new Texture(Gdx.files.internal("logo/iapp_logo.png"));
         logo2 = new Texture(Gdx.files.internal("logo/iapp_logo2.png"));
 
-
         Settings.ASSETS.loadRes();
         splashMusic.play();
         startAnimationLogo();
@@ -59,39 +59,39 @@ public class SplashScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        synchronized (Settings.MUTEX) {
-            update();
-            camera.update();
-            Gdx.graphics.setWindowedMode(900, 500);
+        Gdx.gl.glClearColor( 0, 0, 0, 1.0f);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-            renderer.setColor(0.41f, 0.41f, 0.41f, 0);
-            renderer.begin(ShapeRenderer.ShapeType.Filled);
-            renderer.rect(0, 0, 900, Orientation.grayLineHeight);
-            renderer.setColor(0.75f, 0.75f, 0.75f, 0);
-            renderer.rect(0, 0, Orientation.cameraWidth * progress, Orientation.grayWhiteLineHeight);
-            renderer.end();
+        update();
+        camera.update();
 
-            batch.begin();
-            if (logo != null) {
-                batch.draw(logo, Orientation.logoX, Orientation.logoY, Orientation.logoWidth, Orientation.logoHeight);
+        renderer.setColor(0.41f, 0.41f, 0.41f, 0);
+        renderer.begin(ShapeRenderer.ShapeType.Filled);
+        renderer.rect(0, 0, 900, Orientation.grayLineHeight);
+        renderer.setColor(0.75f, 0.75f, 0.75f, 0);
+        renderer.rect(0, 0, Orientation.cameraWidth * progress, Orientation.grayWhiteLineHeight);
+        renderer.end();
+
+        batch.begin();
+        if (logo != null) {
+            batch.draw(logo, Orientation.logoX, Orientation.logoY, Orientation.logoWidth, Orientation.logoHeight);
+        }
+        font.draw(batch, String.format("Loading %.2f%%", progress * 100), Orientation.bootTextX, Orientation.bootTextY);
+        batch.end();
+
+        if (isFinished()) {
+            Settings.gdxGame.initGameRes();
+            Gdx.graphics.setResizable(true);
+
+            if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
+                Settings.orientation.initSplashScreen(Settings.account.getOrientationType());
+                Settings.orientation.initCamera(Settings.account.getOrientationType());
             }
-            font.draw(batch, String.format("Loading %.2f%%", progress * 100), Orientation.bootTextX, Orientation.bootTextY);
-            batch.end();
 
-            if (isFinished()) {
-                Settings.gdxGame.initGameRes();
-                Gdx.graphics.setResizable(true);
+            MenuView mainView = new MenuView(new MenuController(), true);
+            Settings.gdxGame.setScreen(mainView);
 
-                if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
-                    Settings.orientation.initSplashScreen(Settings.account.getOrientationType());
-                    Settings.orientation.initCamera(Settings.account.getOrientationType());
-                }
-
-                MenuView mainView = new MenuView(new MenuController());
-                Settings.gdxGame.setScreen(mainView);
-
-                dispose();
-            }
+            dispose();
         }
     }
 
@@ -111,13 +111,6 @@ public class SplashScreen implements Screen {
 
     @Override
     public void dispose() {
-        if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
-            int windowWidth = Settings.account.getWindowSize().getKey();
-            int windowHeight = Settings.account.getWindowSize().getValue();
-
-            Gdx.graphics.setWindowedMode(windowWidth, windowHeight);
-        }
-
         splashMusic.dispose();
         batch.dispose();
         renderer.dispose();

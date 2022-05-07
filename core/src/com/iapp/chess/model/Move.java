@@ -1,26 +1,71 @@
 package com.iapp.chess.model;
 
 import java.io.Serializable;
+import java.util.Objects;
 
-public abstract class Move implements Serializable {
+public class Move implements Serializable {
 
-    public abstract byte getFigureY();
+    private byte figureX;
+    private byte figureY;
 
-    abstract void setFigureY(byte figureY);
+    private byte moveX;
+    private byte moveY;
 
-    public abstract byte getFigureX();
+    public Move(int figureX, int figureY, int moveX, int moveY) {
+        this.moveX = (byte) moveX;
+        this.moveY = (byte) moveY;
 
-    abstract void setFigureX(byte figureX);
+        this.figureX = (byte) figureX;
+        this.figureY = (byte) figureY;
+    }
 
-    public abstract byte getMoveX();
+    public byte getFigureY() {
+        return figureY;
+    }
 
-    abstract void setMoveX(byte moveX);
+    void setFigureY(byte figureY) {
+        this.figureY = figureY;
+    }
 
-    public abstract byte getMoveY();
+    public byte getFigureX() {
+        return figureX;
+    }
 
-    abstract void setMoveY(byte moveY);
+    void setFigureX(byte figureX) {
+        this.figureX = figureX;
+    }
 
-    abstract void reset();
+    public byte getMoveX() {
+        return moveX;
+    }
 
-    abstract void init(int figureX, int figureY, int moveX, int moveY);
+    void setMoveX(byte moveX) {
+        this.moveX = moveX;
+    }
+
+    public byte getMoveY() {
+        return moveY;
+    }
+
+    void setMoveY(byte moveY) {
+        this.moveY = moveY;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Move move = (Move) o;
+        return figureX == move.getFigureX() && figureY == move.getFigureY() && moveX == move.getMoveX() && moveY == move.getMoveY();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(figureX, figureY, moveX, moveY);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("figureX = %d figureY = %d moveX = %d moveY = %d", figureX, figureY, moveX, moveY);
+    }
 }

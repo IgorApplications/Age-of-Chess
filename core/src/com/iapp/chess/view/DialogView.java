@@ -9,7 +9,6 @@ import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Group;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
-import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.iapp.chess.controller.GameController;
 import com.iapp.chess.controller.Level;
 import com.iapp.chess.controller.Result;
@@ -17,10 +16,10 @@ import com.iapp.chess.model.*;
 import com.iapp.chess.model.BoardMatrix;
 import com.iapp.chess.standart_ui.QuestionDialog;
 import com.iapp.chess.standart_ui.UIUtils;
+import com.iapp.chess.util.ChangeListener;
 import com.iapp.chess.util.Orientation;
 import com.iapp.chess.util.Settings;
 import com.iapp.chess.util.Text;
-import org.w3c.dom.ls.LSOutput;
 
 public class DialogView {
 
@@ -100,7 +99,7 @@ public class DialogView {
         ImageButton buttonHide = new ImageButton(Settings.gdxGame.getUIKit(), "gray_cancel");
         buttonHide.addListener(new ChangeListener() {
             @Override
-            public void changed(ChangeEvent event, Actor actor) {
+            public void onChanged(ChangeEvent event, Actor actor) {
                 Settings.SOUNDS.playClick();
                 dialog.hide();
                 gameController.unblockGame();
@@ -261,7 +260,7 @@ public class DialogView {
         buttonQueen.add(text1).colspan(4).center().padTop(10);
         buttonQueen.addListener(new ChangeListener() {
             @Override
-            public void changed(ChangeEvent event, Actor actor) {
+            public void onChanged(ChangeEvent event, Actor actor) {
                 Settings.SOUNDS.playClick();
                 gameController.updatePawn(move, BoardMatrix.QUEEN);
                 gameController.unblockGame();
@@ -280,7 +279,7 @@ public class DialogView {
         buttonRook.add(text2).colspan(4).center().padTop(10);
         buttonRook.addListener(new ChangeListener() {
             @Override
-            public void changed(ChangeEvent event, Actor actor) {
+            public void onChanged(ChangeEvent event, Actor actor) {
                 Settings.SOUNDS.playClick();
                 gameController.updatePawn(move, BoardMatrix.ROOK);
                 gameController.unblockGame();
@@ -299,7 +298,7 @@ public class DialogView {
         buttonBishop.add(text3).colspan(4).center().padTop(10);
         buttonBishop.addListener(new ChangeListener() {
             @Override
-            public void changed(ChangeEvent event, Actor actor) {
+            public void onChanged(ChangeEvent event, Actor actor) {
                 Settings.SOUNDS.playClick();
                 gameController.updatePawn(move, BoardMatrix.BISHOP);
                 gameController.unblockGame();
@@ -318,7 +317,7 @@ public class DialogView {
         buttonKnight.add(text4).colspan(4).center().padTop(10);
         buttonKnight.addListener(new ChangeListener() {
             @Override
-            public void changed(ChangeEvent event, Actor actor) {
+            public void onChanged(ChangeEvent event, Actor actor) {
                 Settings.SOUNDS.playClick();
                 gameController.updatePawn(move, BoardMatrix.KNIGHT);
                 gameController.unblockGame();
@@ -358,7 +357,7 @@ public class DialogView {
         questionDialog.setTitle(Text.GAME_MENU)
                 .setOnCancel(new ChangeListener() {
                     @Override
-                    public void changed(ChangeEvent event, Actor actor) {
+                    public void onChanged(ChangeEvent event, Actor actor) {
                         Settings.SOUNDS.playClick();
                         questionDialog.hide();
                         gameController.unblockGame();
@@ -367,7 +366,7 @@ public class DialogView {
                 .setQuestion(Text.REPLAY_TEXT)
                 .setPositive(Text.YES, new ChangeListener() {
                     @Override
-                    public void changed(ChangeEvent event, Actor actor) {
+                    public void onChanged(ChangeEvent event, Actor actor) {
                         Settings.SOUNDS.playClick();
                         gameController.clearSavedGame();
                         gameController.createNewGame();
@@ -379,7 +378,7 @@ public class DialogView {
                 })
                 .setNegative(Text.CANCEL, new ChangeListener() {
                     @Override
-                    public void changed(ChangeEvent event, Actor actor) {
+                    public void onChanged(ChangeEvent event, Actor actor) {
                         Settings.SOUNDS.playClick();
                         questionDialog.hide();
                         gameController.unblockGame();
@@ -407,9 +406,10 @@ public class DialogView {
         ImageButton cancelButton = new ImageButton(Settings.gdxGame.getUIKit(), "cancel");
         cancelButton.addListener(new ChangeListener() {
             @Override
-            public void changed(ChangeEvent event, Actor actor) {
+            public void onChanged(ChangeEvent event, Actor actor) {
                 Settings.SOUNDS.playClick();
                 dialog.hide();
+                dialog.setVisible(false);
                 gameController.unblockGame();
             }
         });
@@ -422,7 +422,7 @@ public class DialogView {
         savedButton.getLabel().setFontScale(0.4f);
         savedButton.addListener(new ChangeListener() {
             @Override
-            public void changed(ChangeEvent event, Actor actor) {
+            public void onChanged(ChangeEvent event, Actor actor) {
                 Settings.SOUNDS.playClick();
                 gameController.goToMenu(gameView, true);
 
@@ -434,7 +434,7 @@ public class DialogView {
         menuButton.getLabel().setFontScale(0.4f);
         menuButton.addListener(new ChangeListener() {
             @Override
-            public void changed(ChangeEvent event, Actor actor) {
+            public void onChanged(ChangeEvent event, Actor actor) {
                 Settings.SOUNDS.playClick();
                 gameController.goToMenu(gameView, false);
 
@@ -446,7 +446,7 @@ public class DialogView {
         cancelDialogButton.getLabel().setFontScale(0.4f);
         cancelDialogButton.addListener(new ChangeListener() {
             @Override
-            public void changed(ChangeEvent event, Actor actor) {
+            public void onChanged(ChangeEvent event, Actor actor) {
                 Settings.SOUNDS.playClick();
                 dialog.hide();
                 dialog.setVisible(false);

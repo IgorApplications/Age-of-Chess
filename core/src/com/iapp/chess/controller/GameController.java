@@ -121,7 +121,7 @@ public class GameController {
         gameView.setDrawableHintMoves(true);
         gameView.setDrawableHintCastle(true);
         clearGameView();
-        blockedGame= new Bool(false);
+        blockedGame = new Bool(false);
 
         GameController gameController = new GameController(level);
         gameController.setGameView(gameView);
@@ -134,7 +134,11 @@ public class GameController {
         gameView.clearBlueHint();
 
         if (isUpdated(move)) {
-            dialogView.showChoiceFigureDialog(move);
+            if (ai != null && ai.getAIColor() == game.getColorMove()) {
+                updatePawn(move, BoardMatrix.QUEEN);
+            } else {
+                dialogView.showChoiceFigureDialog(move);
+            }
             return;
         }
 
@@ -150,6 +154,7 @@ public class GameController {
             dialogView.showFinishDialog(defineResult());
             blockedGame.addPositive();
             aiMakeMove = false;
+            return;
         }
 
         if (ai != null && ai.getAIColor() == game.getColorMove()) {
@@ -182,6 +187,12 @@ public class GameController {
         updateFigureViews();
         game.updatePawn(move.getMoveX(), move.getMoveY(), type);
         updateFigureViews();
+
+        if (isFinish()) dialogView.showFinishDialog(defineResult());
+
+        if (ai != null && ai.getAIColor() == game.getColorMove()) {
+            makeMoveAI();
+        }
     }
 
     public void addOnFinishSound(int x, int y, CallListener callBack) {
@@ -239,10 +250,7 @@ public class GameController {
 
     public void cancelMove() {
         if (blockedGame.get() && game.getMove() > 0) return;
-
-        gameView.clearGreenCross();
-        gameView.unselectChosenFigure();
-        gameView.clearMoves();
+        clearGameView();
 
         game.cancelMove();
         updateFigureViews(true, false, false);
@@ -250,10 +258,7 @@ public class GameController {
 
     public void cancelTurn() {
         if (blockedGame.get() || game.getMove() < 2) return;
-
-        gameView.clearGreenCross();
-        gameView.unselectChosenFigure();
-        gameView.clearMoves();
+        clearGameView();
 
         game.cancelMove();
         updateFigureViews(false, false, false);
@@ -344,6 +349,8 @@ public class GameController {
 
         if (isFinish()) {
             blockedGame.addPositive();
+            aiMakeMove = false;
+            return;
         }
 
         if (ai != null && ai.getAIColor() == game.getColorMove()) {
@@ -361,11 +368,11 @@ public class GameController {
         } else if (level == Level.EASY) {
             return new AI(2, Settings.account.getAIPerformanceMode(), aiColor);
         } else if (level == Level.MIDDLE) {
-            return new AI(3, Settings.account.getAIPerformanceMode(), aiColor);
+            return new AI(2, Settings.account.getAIPerformanceMode(), aiColor);
         } else if (level == Level.HARD) {
-            return new AI(4, Settings.account.getAIPerformanceMode(), aiColor);
+            return new AI(3, Settings.account.getAIPerformanceMode(), aiColor);
         } else if (level == Level.MASTER) {
-            return new AI(5, Settings.account.getAIPerformanceMode(), aiColor);
+            return new AI(3, Settings.account.getAIPerformanceMode(), aiColor);
         }
         throw new IllegalArgumentException();
     }

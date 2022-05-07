@@ -3,19 +3,16 @@ package com.iapp.chess;
 import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.FPSLogger;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.actions.RunnableAction;
 import com.badlogic.gdx.scenes.scene2d.actions.SequenceAction;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-import com.badlogic.gdx.utils.Align;
 import com.iapp.chess.controller.Account;
-import com.iapp.chess.controller.GameController;
 import com.iapp.chess.util.Assets;
 import com.iapp.chess.util.Orientation;
 import com.iapp.chess.util.Settings;
@@ -27,10 +24,12 @@ import java.util.concurrent.Executors;
 public class GdxGame extends Game {
 
 	private final Launcher launcher;
+
 	private TextureAtlas chessAtlas;
 	private TextureAtlas standardFigures;
 	private TextureAtlas modeFigures;
 
+	private FPSLogger fpsLogger;
 	private TextureAtlas uiKitAtlas;
 	private ExecutorService threadPool;
 
@@ -38,10 +37,6 @@ public class GdxGame extends Game {
 	private Skin labelSkin;
 	private Skin dialogSkin;
 	private Skin uiKit;
-
-	private OrthographicCamera gdxCamera;
-	private SpriteBatch gdxBatch;
-	private BitmapFont gdxFont;
 
 	public GdxGame(Launcher launcher) {
 		this.launcher = launcher;
@@ -87,60 +82,49 @@ public class GdxGame extends Game {
 		return uiKit;
 	}
 
-	public OrthographicCamera getGdxCamera() {
-		return gdxCamera;
-	}
-
 	public void execute(Runnable task) {
 		threadPool.execute(task);
 	}
 
 	@Override
-	public void create () {
+	public void create() {
 		try {
 			initSettings();
 			initGdxGUI();
-			threadPool = Executors.newFixedThreadPool(3);
+			threadPool = Executors.newFixedThreadPool(2);
 
 			setScreen(new SplashScreen());
 		} catch (Throwable t) {
-			t.printStackTrace();
 			Settings.LOGGER.log(t);
 		}
 	}
 
 	@Override
-	public void render () {
-		Gdx.gl.glClearColor( 0, 0, 0, 1.0f);
+	public void render() {
+		Gdx.gl.glClearColor(0, 0, 0, 1.0f);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
 		try {
-			if (!Settings.LOGGER.isEmpty()) {
-				gdxCamera.update();
-				gdxBatch.setProjectionMatrix(gdxCamera.combined);
-
-				gdxBatch.begin();
-				gdxFont.draw(gdxBatch, Settings.LOGGER.getText(), 20.0f, Orientation.cameraHeight - 20.0f, Orientation.cameraWidth - 30.0f, Align.left, true);
-				gdxBatch.end();
-			} else {
-				super.render();
-			}
-		} catch (Throwable t) {
-			t.printStackTrace();
+			if (Settings.LOGGER.isEmpty()) super.render();
+			Settings.LOGGER.render();
+		} catch  (Throwable t) {
 			Settings.LOGGER.log(t);
 		}
  	}
 
 	@Override
-	public void dispose () {
+	public void dispose() {
 		Settings.account.saveWindowSize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 		Settings.DATA.saveAccount(Settings.account);
+		Settings.DATA.appendLogs();
 
 		threadPool.shutdownNow();
 		if (chessAtlas != null) chessAtlas.dispose();
+
 		Settings.SOUNDS.dispose();
 		Settings.FONT.dispose();
 		Settings.ASSETS.dispose();
+		Settings.LOGGER.dispose();
 
 		super.dispose();
 		System.exit(0);
@@ -164,7 +148,6 @@ public class GdxGame extends Game {
 		modeFigures = Settings.ASSETS.get(Assets.MODE_FIGURES);
 
 		BitmapFont arial = Settings.FONT.createArial();
-		BitmapFont algerian = Settings.FONT.createAlgerian(50);
 
 		buttonSkin = new Skin();
 		buttonSkin.addRegions(chessAtlas);
@@ -174,7 +157,6 @@ public class GdxGame extends Game {
 		labelSkin = new Skin();
 		labelSkin.addRegions(chessAtlas);
 		labelSkin.add("arial", arial);
-		labelSkin.add("algerian", algerian);
 		labelSkin.load(Gdx.files.internal("jsons/label.json"));
 
 		dialogSkin = new Skin();
@@ -198,14 +180,11 @@ public class GdxGame extends Game {
 	}
 
 	private void initGdxGUI() {
-		gdxCamera = new OrthographicCamera();
-		gdxCamera.setToOrtho(false, Orientation.cameraWidth, Orientation.cameraHeight);
-
-		gdxBatch = new SpriteBatch();
-		gdxFont = Settings.FONT.createArial(18);
+		fpsLogger = new FPSLogger();
 
 		if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
-			Settings.orientation.init(Settings.account.getOrientationType(), true);
+			Settings.account.updateOrientationType(Orientation.Type.HORIZONTAL);
+			Settings.orientation.init(Orientation.Type.HORIZONTAL);
 		} else {
 			Settings.orientation.init(Settings.account.getOrientationType());
 		}

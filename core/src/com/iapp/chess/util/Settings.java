@@ -8,8 +8,8 @@ public class Settings {
 
     public static final Font FONT = Font.getInstance();
     public static final Sounds SOUNDS = Sounds.getInstance();
-    public static final Logger LOGGER = Logger.getInstance();
     public static final Assets ASSETS = Assets.getInstance();
+    public static final Logger LOGGER = Logger.getInstance();
     public static final SaveData DATA = new SaveData();
     public static final Object MUTEX = new Object();
 

@@ -13,6 +13,7 @@ public class Sounds implements Disposable {
     private Sound win;
     private Sound winMaster;
     private Sound lose;
+    private Music main;
 
     private static final Sounds sounds = new Sounds();
 

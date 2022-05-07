@@ -17,7 +17,9 @@ public class DesktopLauncher implements Launcher {
 		config.setWindowedMode(900, 500);
 		config.setTitle("Chess");
 		config.setWindowIcon(Files.FileType.Internal,"icons/chess_icon128.png", "icons/chess_icon32.png", "icons/chess_icon16.png");
-		new Lwjgl3Application(new GdxGame(new DesktopLauncher()), config);
+
+		DesktopLauncher desktopLauncher = new DesktopLauncher();
+		new Lwjgl3Application(new GdxGame(desktopLauncher), config);
 	}
 
 	@Override
@@ -43,7 +45,7 @@ public class DesktopLauncher implements Launcher {
 	@Override
 	public void addOnFinish(CallListener callListener) {}
 
-    private void flip() {
+	private void flip() {
 		Gdx.graphics.setWindowedMode(Gdx.graphics.getHeight(), Gdx.graphics.getWidth());
 	}
 }

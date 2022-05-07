@@ -57,6 +57,9 @@ public class SettingsView implements Screen {
     private ImageButton soundCheck;
     private ImageButton soundLose;
 
+    private ImageButton showFPS;
+    private ImageButton showRAM;
+
     private ScrollPane boards;
     private ImageButton board1;
     private ImageButton board2;
@@ -126,6 +129,8 @@ public class SettingsView implements Screen {
 
         uiDialog.addTitle(Text.DEBUG);
         uiDialog.addElement(Text.AI_PERFORMANCE, performanceAI);
+        uiDialog.addElement("Колличество кадров в секунду", showFPS);
+        uiDialog.addElement("Объём используемой ОЗУ", showRAM);
         uiDialog.addElement(Text.INFO_DELETE_ACCOUNT, group);
 
         stage.addActor(uiDialog);
@@ -169,6 +174,8 @@ public class SettingsView implements Screen {
         soundCastle = createCheckButton();
         soundCheck = createCheckButton();
         soundLose  = createCheckButton();
+        showFPS = createCheckButton(false);
+        showRAM = createCheckButton(false);
 
         stage.addActor(backButton);
     }
@@ -214,10 +221,11 @@ public class SettingsView implements Screen {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 if (!board2.isChecked()) return;
-
                 Settings.SOUNDS.playClick();
+
                 if (!Settings.account.isAvailableModeFigures()) {
                     showQuestionDialog(Text.QUESTION_ABOUT_BUYING, dialog -> {
+                        Settings.SOUNDS.playClick();
                         if (Settings.account.getCoins() < 1000) return;
 
                         Settings.account.buyModeFigures();
@@ -226,7 +234,9 @@ public class SettingsView implements Screen {
 
                         coin.setVisible(false);
                         price.setVisible(false);
-                    }, dialog -> board1.setChecked(true));
+                    }, dialog -> {
+                        board1.setChecked(true);
+                    });
                 } else {
                     Settings.account.setChosenFigureSet(FigureSet.MODE);
                 }
@@ -419,15 +429,33 @@ public class SettingsView implements Screen {
             }
         });
 
+        showFPS.addListener(new com.iapp.chess.util.ChangeListener() {
+            @Override
+            public void onChanged(ChangeEvent event, Actor actor) {
+                Settings.SOUNDS.playClick();
+                Settings.account.setShowFPS(showFPS.isChecked());
+            }
+        });
+
+        showRAM.addListener(new com.iapp.chess.util.ChangeListener() {
+            @Override
+            public void onChanged(ChangeEvent event, Actor actor) {
+                Settings.SOUNDS.playClick();
+                Settings.account.setShowRAM(showRAM.isChecked());
+            }
+        });
+
         clearingAccount.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 Settings.SOUNDS.playClick();
                 showQuestionDialog(Text.DELETE_ACCOUNT_DIALOG, dialog -> {
+                    Settings.SOUNDS.playClick();
                     Settings.account = new Account();
+                    Settings.DATA.removeLogs();
                     updateScoreBoard();
                     dialog.hide();
-                }, null);
+                }, dialog -> Settings.SOUNDS.playClick());
             }
         });
     }
@@ -441,7 +469,6 @@ public class SettingsView implements Screen {
                 .setOnCancel(new ChangeListener() {
                     @Override
                     public void changed(ChangeEvent event, Actor actor) {
-                        Settings.SOUNDS.playClick();
                         if (onCancel != null) onCancel.changed(questionDialog);
                         questionDialog.hide();
                     }
@@ -450,14 +477,12 @@ public class SettingsView implements Screen {
                 .setPositive(Text.YES, new ChangeListener() {
                     @Override
                     public void changed(ChangeEvent event, Actor actor) {
-                        Settings.SOUNDS.playClick();
                         if (onAccept!= null) onAccept.changed(questionDialog);
                     }
                 })
                 .setNegative(Text.CANCEL, new ChangeListener() {
                     @Override
                     public void changed(ChangeEvent event, Actor actor) {
-                        Settings.SOUNDS.playClick();
                         if (onCancel != null) onCancel.changed(questionDialog);
                         questionDialog.hide();
                     }
@@ -497,6 +522,8 @@ public class SettingsView implements Screen {
         soundCastle.setChecked(!Settings.account.isBlockedSoundCastle());
         soundCheck.setChecked(!Settings.account.isBlockedSoundCheck());
         soundLose.setChecked(!Settings.account.isBlockedSoundLose());
+        showFPS.setChecked(Settings.account.isShowFPS());
+        showRAM.setChecked(Settings.account.isShowRAM());
 
         FigureSet figureSet = Settings.account.getChosenFigureSet();
         if (figureSet == FigureSet.STANDARD) {
@@ -509,9 +536,7 @@ public class SettingsView implements Screen {
     }
 
     @Override
-    public void show() {
-
-    }
+    public void show() {}
 
     @Override
     public void render(float delta) {
@@ -536,17 +561,14 @@ public class SettingsView implements Screen {
     @Override
     public void pause() {
         Settings.DATA.saveAccount(Settings.account);
+        Settings.DATA.appendLogs();
     }
 
     @Override
-    public void resume() {
-
-    }
+    public void resume() {}
 
     @Override
-    public void hide() {
-
-    }
+    public void hide() {}
 
     @Override
     public void dispose() {
@@ -561,9 +583,12 @@ public class SettingsView implements Screen {
     }
 
     private ImageButton createCheckButton() {
+        return createCheckButton(true);
+    }
+
+    private ImageButton createCheckButton(boolean checked) {
         ImageButton imageButton =  new ImageButton(Settings.gdxGame.getUIKit(), "check");
-        imageButton.setSize(35, 35);
-        imageButton.setChecked(true);
+        imageButton.setChecked(checked);
         return imageButton;
     }
 }

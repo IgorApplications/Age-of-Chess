@@ -1,5 +1,6 @@
 package com.iapp.chess.util;
 
+import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.iapp.chess.controller.Account;
@@ -9,10 +10,19 @@ import java.io.*;
 
 public class SaveData {
 
+    private static final String DIRECTORY = "chess-data" + File.separator;
     private final FileHandle accountHandler;
 
     public SaveData() {
-        accountHandler = Gdx.files.external("account.dat");
+        accountHandler = Gdx.files.external(DIRECTORY + "account.dat");
+    }
+
+    public void appendLogs() {
+        writeLogos(Settings.LOGGER.getOutLogs(), Settings.LOGGER.getErrLogs(), true);
+    }
+
+    public void removeLogs() {
+        writeLogos("", "", false);
     }
 
     public void saveAccount(Account account) {
@@ -32,14 +42,6 @@ public class SaveData {
         }
     }
 
-    public Game cloneGame(Game game) {
-        try {
-            return (Game) deserialize(serialize(game));
-        } catch (IOException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     private byte[] serialize(Object obj) throws IOException {
         try (ByteArrayOutputStream byteArray = new ByteArrayOutputStream();
             ObjectOutputStream byteWriter = new ObjectOutputStream(byteArray)) {
@@ -53,5 +55,13 @@ public class SaveData {
             ObjectInputStream bytesReader = new ObjectInputStream(byteArray)) {
             return bytesReader.readObject();
         }
+    }
+
+    private void writeLogos(String outText, String errText, boolean append) {
+        FileHandle out = Gdx.files.external(DIRECTORY + "out.txt");
+        out.writeString(Settings.LOGGER.getOutLogs(), true);
+
+        FileHandle err = Gdx.files.external(DIRECTORY + "err.txt");
+        err.writeString(Settings.LOGGER.getErrLogs(), true);
     }
 }

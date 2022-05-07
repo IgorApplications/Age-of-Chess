@@ -10,17 +10,13 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
-import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.StretchViewport;
 import com.iapp.chess.controller.GameController;
 import com.iapp.chess.controller.Level;
 import com.iapp.chess.model.*;
 import com.iapp.chess.util.*;
-
 import java.util.Arrays;
-
-import static com.badlogic.gdx.scenes.scene2d.actions.Actions.fadeIn;
 
 public class GameView implements Screen {
 
@@ -264,6 +260,7 @@ public class GameView implements Screen {
     public void pause() {
         gameController.updateSavedGame();
         Settings.DATA.saveAccount(Settings.account);
+        Settings.DATA.appendLogs();
     }
 
     @Override
@@ -432,7 +429,7 @@ public class GameView implements Screen {
         buttonMenu.setSize(Orientation.buttonMenuWidth, Orientation.buttonMenuHeight);
         buttonMenu.addListener(new ChangeListener() {
             @Override
-            public void changed(ChangeEvent event, Actor actor) {
+            public void onChanged(ChangeEvent event, Actor actor) {
                 Settings.SOUNDS.playClick();
                 if (gameController.getTurn() < 2) {
                     gameController.goToMenu(GameView.this, false);
@@ -448,7 +445,7 @@ public class GameView implements Screen {
         buttonReplay.setSize(Orientation.buttonReplayWidth, Orientation.buttonReplayHeight);
         buttonReplay.addListener(new ChangeListener() {
             @Override
-            public void changed(ChangeEvent event, Actor actor) {
+            public void onChanged(ChangeEvent event, Actor actor) {
                 Settings.SOUNDS.playClick();
                 gameController.getDialogView().showReplayGameDialog();
             }
@@ -460,7 +457,7 @@ public class GameView implements Screen {
         buttonBack.setSize(Orientation.buttonBackWidth, Orientation.buttonBackHeight);
         buttonBack.addListener(new ChangeListener() {
             @Override
-            public void changed(ChangeEvent event, Actor actor) {
+            public void onChanged(ChangeEvent event, Actor actor) {
                 Settings.SOUNDS.playClick();
                 if (gameController.getLevel() == Level.TWO_PLAYERS) gameController.cancelMove();
                 else gameController.cancelTurn();
@@ -473,7 +470,7 @@ public class GameView implements Screen {
         buttonDescription.setSize(Orientation.buttonDescriptionWidth, Orientation.buttonDescriptionHeight);
         buttonDescription.addListener(new ChangeListener() {
             @Override
-            public void changed(ChangeEvent event, Actor actor) {
+            public void onChanged(ChangeEvent event, Actor actor) {
                 Settings.SOUNDS.playClick();
                 gameController.getDialogView().showDescriptionDialog();
             }
@@ -485,7 +482,7 @@ public class GameView implements Screen {
         buttonHint.setSize(Orientation.buttonHintWidth, Orientation.buttonHintHeight);
         buttonHint.addListener(new ChangeListener() {
             @Override
-            public void changed(ChangeEvent event, Actor actor) {
+            public void onChanged(ChangeEvent event, Actor actor) {
                 Settings.SOUNDS.playClick();
                 gameController.showHint();
             }
@@ -498,7 +495,7 @@ public class GameView implements Screen {
         stage.addActor(buttonHint);
 
         Settings.launcher.addOnFinish(() -> Gdx.app.postRunnable(() -> {
-            if (gameController.getTurn() < 2|| (onFinish != null && onFinish.isVisible())) {
+            if (gameController.getTurn() < 2 || (onFinish != null && onFinish.isVisible())) {
                 gameController.goToMenu(GameView.this, false);
             } else {
                 onFinish = gameController.getDialogView().showMenuDialog();
