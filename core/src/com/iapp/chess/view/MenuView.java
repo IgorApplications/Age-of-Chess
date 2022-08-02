@@ -30,10 +30,10 @@ public class MenuView implements Screen {
     private UIDialog uiDialog;
     private ScrollPane scrollPane;
 
-    private SpriteBatch batch;
-    private OrthographicCamera camera;
+    private final SpriteBatch batch;
+    private final OrthographicCamera camera;
 
-    private TextureAtlas.AtlasRegion background;
+    private final TextureAtlas.AtlasRegion background;
     private boolean startView;
 
     public MenuView(MenuController menuController) {
@@ -60,7 +60,7 @@ public class MenuView implements Screen {
             int windowHeight = Settings.account.getWindowSize().getValue();
 
             Gdx.graphics.setWindowedMode(windowWidth, windowHeight);
-            Settings.orientation.initWindowOrientation(Settings.account.getOrientationType());
+            Settings.orientation.initWindowOrientation(Settings.account.getOrientation());
         }
     }
 
@@ -120,14 +120,14 @@ public class MenuView implements Screen {
         initButtons();
     }
 
-    private ButtonGroup<TextButton> buttonGroup = new ButtonGroup<>();
-    private List<TextButton> levelButtons = new ArrayList<>();
+    private final ButtonGroup<TextButton> buttonGroup = new ButtonGroup<>();
+    private final List<TextButton> levelButtons = new ArrayList<>();
     private TextButton buttonPlay;
     private Label infoLevel;
     private static final int COUNT_LEVEL = 9;
 
     private void initLabels() {
-        infoLevel = new Label(Settings.account.getChoiceLevel().toString(), Settings.gdxGame.getLabelSkin(), "default");
+        infoLevel = new Label(Settings.account.getChoiceLevel().getText(), Settings.gdxGame.getLabelSkin(), "default");
         infoLevel.setFontScale(0.5f);
         infoLevel.setAlignment(Align.center);
         infoLevel.setColor(Color.WHITE);
@@ -152,15 +152,15 @@ public class MenuView implements Screen {
             }
         });
 
-        TextButton buttonSettings = new TextButton(Text.SETTINGS, Settings.gdxGame.getUIKit(), "settings");
+        TextButton buttonSettings = new TextButton(Text.MODDING, Settings.gdxGame.getUIKit(), "settings");
         buttonSettings.getLabel().setFontScale(0.5f);
         buttonSettings.getLabelCell().padLeft(20);
         buttonSettings.addListener(new ChangeListener() {
             @Override
             public void onChanged(ChangeEvent event, Actor actor) {
                 Settings.gdxGame.goToScreen(stage, Actions.run(() -> {
-                    SettingsView settingsView = new SettingsView(menuController);
-                    Settings.gdxGame.setScreen(settingsView);
+                    ModdingView moddingView = new ModdingView(menuController);
+                    Settings.gdxGame.setScreen(moddingView);
                     dispose();
                 }), 0.15f);
             }
@@ -181,7 +181,7 @@ public class MenuView implements Screen {
                 public void onChanged(ChangeEvent event, Actor actor) {
                     Settings.account.setChoiceLevel(level);
                     if (infoLevel != null) {
-                        infoLevel.setText(level.toString());
+                        infoLevel.setText(level.getText());
                     }
                 }
             });
@@ -196,7 +196,11 @@ public class MenuView implements Screen {
         final int countCloseLevels = COUNT_LEVEL - levelButtons.size();
 
         for (int i = 0; i < countCloseLevels; i++) {
-            TextButton choiceLevelClose = new TextButton(Text.CLOSE, Settings.gdxGame.getButtonSkin(), "closed");
+            String status;
+            if (Level.values().length - levelButtons.size() <= i) status = Text.SOON;
+            else status = Text.CLOSE;
+
+            TextButton choiceLevelClose = new TextButton(status, Settings.gdxGame.getButtonSkin(), "closed");
             choiceLevelClose.getLabel().setFontScale(0.5f, 0.5f);
             choiceLevelClose.getLabelCell().pad(0, 0,0 ,25);
             choiceButtons.add(choiceLevelClose);

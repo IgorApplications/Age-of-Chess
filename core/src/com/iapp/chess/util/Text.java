@@ -1,24 +1,21 @@
 package com.iapp.chess.util;
 
-import com.sun.org.apache.bcel.internal.generic.PUSH;
-
-import javax.swing.plaf.PanelUI;
-import java.awt.event.WindowListener;
 import java.util.Locale;
 import java.util.Objects;
 
 public class Text {
 
     /**
-     * MainView
+     * MenuView
      * */
     public static final String TITLE;
     public static final String PLAY;
     public static final String NOVICE_LEVEL;
     public static final String EASY_LEVEL;
     public static final String CLOSE;
+    public static final String SOON;
     public static final String TWO_PLAYERS_LEVEL;
-    public static final String SETTINGS;
+    public static final String MODDING;
     public static final String LEVEL_SELECTION;
 
     /**
@@ -58,11 +55,12 @@ public class Text {
     public static final String MOVE_AI;
 
     /**
-     * SettingsView
+     * ModdingView
      **/
     public static final String GAME_MODE;
     public static final String ORIENTATION_SCREEN;
     public static final String SAVE_WINDOW_SIZE;
+    public static final String REVERSED_TWO_PLAYERS;
 
     public static final String AI_COLOR;
     public static final String GRAPHICS_EFFECTS;
@@ -73,6 +71,9 @@ public class Text {
     public static final String OUTLINE_CHECK;
     public static final String GREEN_CROSS;
     public static final String SELECTION_FIGURES;
+    public static final String ISOMETRIC;
+    public static final String ROYAL;
+    public static final String STANDARD;
 
     public static final String SOUND_EFFECTS;
     public static final String SOUND_PRESSING;
@@ -100,6 +101,8 @@ public class Text {
     public static final String INFO_DELETE_ACCOUNT;
     public static final String DELETE_ACCOUNT;
     public static final String DELETE_ACCOUNT_DIALOG;
+    public static final String FPS_TEXT;
+    public static final String RAM_TEXT;
 
     /**
      * DialogView
@@ -120,19 +123,18 @@ public class Text {
     public static final String DRAW_TEXT;
     public static final String NEVER_VICTORY;
 
-    private static String sysLang;
-
     static {
-        sysLang = Locale.getDefault().getLanguage();
+        String sysLang = Locale.getDefault().getLanguage();
 
         if (Objects.equals(sysLang, "ru")) {
             TITLE = "Шахматы";
             PLAY = "Играть";
             NOVICE_LEVEL = "уровень\nновичка";
             EASY_LEVEL = "лёгкий\nуровень";
-            CLOSE = "закрыт";
+            CLOSE = "закрыто";
+            SOON = "скоро";
             TWO_PLAYERS_LEVEL = "два\nигрока";
-            SETTINGS = "Настройки";
+            MODDING = "Моддинг";
             LEVEL_SELECTION = "Выбор уровней";
 
             QUESTION_EXIT_MENU = "Вы хотите выйти в меню?";
@@ -171,6 +173,7 @@ public class Text {
             GAME_MODE = "Режим игры";
             ORIENTATION_SCREEN = "Ориентация экрана";
             SAVE_WINDOW_SIZE = "Сохранять размеры окна";
+            REVERSED_TWO_PLAYERS = "Перевёрнутые верхние фигуры в режиме два игрока";
 
             AI_COLOR = "Цвет фигур ИИ";
             GRAPHICS_EFFECTS = "Графические эффекты";
@@ -180,7 +183,10 @@ public class Text {
             CASTLE_HINTS = "Посказки ракировки";
             OUTLINE_CHECK = "Обводка при шахе";
             GREEN_CROSS = "Значок зелёного креста";
-            SELECTION_FIGURES = "Выбор набора фигура";
+            SELECTION_FIGURES = "Выбор набора фигур";
+            ISOMETRIC = "Изометрические";
+            ROYAL = "Королевские";
+            STANDARD = "Стандартные";
 
             SOUND_EFFECTS = "Звуковые эффекты";
             SOUND_PRESSING = "Звук нажатия";
@@ -190,6 +196,8 @@ public class Text {
             SOUND_CASTLE = "Звук ракировки";
             SOUND_CHECK = "Звук шаха";
             SOUND_LOSE = "Звук поражения";
+            FPS_TEXT = "Колличество кадров в секунду";
+            RAM_TEXT = "Объём используемой ОЗУ";
 
             HORIZONTAL = "Горизонтально";
             VERTICAL = "Вертикально";
@@ -223,16 +231,20 @@ public class Text {
             BEST_SCORE_AT_LEVEL = "Ваш лучший результат на данном уровне: ";
             DRAW_TEXT = "К сожалению вы несмогли победить своего соперника. Игра завершена, так как больше нет возможных ходов.";
             LOSS_TEXT = "К сожалению, вы проиграли. В следующий раз возможно вам повезет.";
-            NEVER_VICTORY = "ы ещё не разу не смогли пройти этот уровень.";
+            NEVER_VICTORY = "Вы ещё не разу не смогли пройти этот уровень.";
         } else {
             TITLE = "Chess";
             PLAY = "Play";
             NOVICE_LEVEL = "level\nnovice";
             EASY_LEVEL = "level\neasy";
             CLOSE = "close";
+            SOON = "soon";
             TWO_PLAYERS_LEVEL = "two\nplayers";
-            SETTINGS = "Settings";
+            MODDING = "Modding";
             LEVEL_SELECTION = "Level selection";
+            ISOMETRIC = "Isometric";
+            ROYAL = "Royal";
+            STANDARD = "Standard";
 
             QUESTION_EXIT_MENU = "Do you want to go to the\n" + "             " + "menu?";
             CANCEL = "Cancel";
@@ -270,6 +282,7 @@ public class Text {
             GAME_MODE = "Game mode";
             ORIENTATION_SCREEN = "Orientation screen";
             SAVE_WINDOW_SIZE = "Save window size";
+            REVERSED_TWO_PLAYERS = "Flipped upper figures in two players mode";
 
             AI_COLOR = "AI figure color";
             GRAPHICS_EFFECTS = "Graphics effects";
@@ -289,6 +302,8 @@ public class Text {
             SOUND_CASTLE = "Sound castle";
             SOUND_CHECK = "Sound check";
             SOUND_LOSE = "Sound lose";
+            FPS_TEXT = "Frames per second";
+            RAM_TEXT = "The amount of RAM used";
 
             HORIZONTAL = "Horizontal";
             VERTICAL = "Vertical";

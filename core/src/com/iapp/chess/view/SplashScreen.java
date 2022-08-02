@@ -84,8 +84,8 @@ public class SplashScreen implements Screen {
             Gdx.graphics.setResizable(true);
 
             if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
-                Settings.orientation.initSplashScreen(Settings.account.getOrientationType());
-                Settings.orientation.initCamera(Settings.account.getOrientationType());
+                Settings.orientation.initSplashScreen(Settings.account.getOrientation());
+                Settings.orientation.initCamera(Settings.account.getOrientation());
             }
 
             MenuView mainView = new MenuView(new MenuController(), true);

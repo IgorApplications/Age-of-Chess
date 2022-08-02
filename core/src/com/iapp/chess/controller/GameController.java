@@ -8,25 +8,26 @@ import com.iapp.chess.model.*;
 import com.iapp.chess.model.ai.AI;
 import com.iapp.chess.util.Bool;
 import com.iapp.chess.util.CallListener;
+import com.iapp.chess.util.FigureSet;
 import com.iapp.chess.util.Settings;
 import com.iapp.chess.view.DialogView;
 import com.iapp.chess.view.FigureView;
 import com.iapp.chess.view.GameView;
 import com.iapp.chess.view.MenuView;
 
-import java.util.Arrays;
-
 public class GameController {
 
     private Game game;
     private AI ai;
     private AI hintAI;
+    private boolean hintLoaded;
     private GameView gameView;
     private DialogView dialogView;
-    private Level level;
-    private volatile boolean aiMakeMove;
+    private final Level level;
+    private boolean aiMakeMove;
     private Bool blockedGame = new Bool();
 
+    private FigureSet figureSet;
     private final TextureAtlas.AtlasRegion[] figureImages = new TextureAtlas.AtlasRegion[17];
     private final FigureView[] figureViews = new FigureView[32];
 
@@ -56,10 +57,6 @@ public class GameController {
 
     public Level getLevel() {
         return level;
-    }
-
-    public void setLevel(Level level) {
-        this.level = level;
     }
 
     public boolean isAIMakeMove() {
@@ -98,9 +95,7 @@ public class GameController {
      * Intent
      * */
     public void goToMenu(GameView gameView, boolean saveGame) {
-        if (ai != null) {
-            ai.interrupt();
-        }
+        if (ai != null) ai.interrupt();
 
         if (saveGame) updateSavedGame();
         else clearSavedGame();
@@ -114,9 +109,7 @@ public class GameController {
      * Game methods
      **/
     public void createNewGame() {
-        if (ai != null) {
-            ai.interrupt();
-        }
+        if (ai != null) ai.interrupt();
 
         gameView.setDrawableHintMoves(true);
         gameView.setDrawableHintCastle(true);
@@ -125,7 +118,7 @@ public class GameController {
 
         GameController gameController = new GameController(level);
         gameController.setGameView(gameView);
-        gameView.initGUI(gameController);
+        gameView.initGraphics(gameController);
     }
 
     public void makeMove(Move move) {
@@ -162,11 +155,9 @@ public class GameController {
         }
     }
 
-    private boolean hintLoaded;
-
     public void showHint() {
         if (hintLoaded || isBlockedGame() || gameView.getBlueHint() != null) return;
-        hintAI.setAIColor(game.getColorMove());
+        hintAI = defineAI(Level.MIDDLE, game.getColorMove());
         hintLoaded = true;
 
         hintAI.getMove(game, moveAI -> Gdx.app.postRunnable(() -> {
@@ -199,20 +190,23 @@ public class GameController {
         figureViews[game.getId(x, y)].addOnFinishSound(callBack);
     }
 
-    public void initViewFigures(TextureAtlas figureSet) {
-        figureImages[0] = figureSet.findRegion("white_king");
-        figureImages[1] = figureSet.findRegion("white_queen");
-        figureImages[2] = figureSet.findRegion("white_bishop");
-        figureImages[3] = figureSet.findRegion("white_knight");
-        figureImages[4] = figureSet.findRegion("white_rook");
-        figureImages[5] = figureSet.findRegion("white_pawn");
+    public void initViewFigures(FigureSet figureSet) {
+        this.figureSet = figureSet;
+        updateFlippedFigures();
 
-        figureImages[11] = figureSet.findRegion("black_pawn");
-        figureImages[12] = figureSet.findRegion("black_rook");
-        figureImages[13] = figureSet.findRegion("black_knight");
-        figureImages[14] = figureSet.findRegion("black_bishop");
-        figureImages[15] = figureSet.findRegion("black_queen");
-        figureImages[16] = figureSet.findRegion("black_king");
+        figureImages[5] = figureSet.getPawn(Color.WHITE);
+        figureImages[4] = figureSet.getRook(Color.WHITE);
+        figureImages[3] = figureSet.getKnight(Color.WHITE);
+        figureImages[2] = figureSet.getBishop(Color.WHITE);
+        figureImages[1] = figureSet.getQueen(Color.WHITE);
+        figureImages[0] = figureSet.getKing(Color.WHITE);
+
+        figureImages[11] = figureSet.getPawn(Color.BLACK);
+        figureImages[12] = figureSet.getRook(Color.BLACK);
+        figureImages[13] = figureSet.getKnight(Color.BLACK);
+        figureImages[14] = figureSet.getBishop(Color.BLACK);
+        figureImages[15] = figureSet.getQueen(Color.BLACK);
+        figureImages[16] = figureSet.getKing(Color.BLACK);
 
         byte[][] matrix = game.getMatrix();
 
@@ -221,7 +215,7 @@ public class GameController {
                 byte figure = matrix[i][j];
                 if (figure == BoardMatrix.CAGE) continue;
 
-                FigureView figureView = new FigureView(j, i, figureImages[figure + 8]);
+                FigureView figureView = new FigureView(j, i, game.getColor(j, i), figureImages[figure + 8]);
                 figureViews[game.getId(j, i)] = figureView;
             }
         }
@@ -280,9 +274,8 @@ public class GameController {
 
     public boolean isCheckKing(FigureView figureView) {
         FigureView checkKing = gameView.getCheckKing();
-        if (checkKing != null && figureView.getX() == checkKing.getX() && figureView.getY() == checkKing.getY())
-            return true;
-        return false;
+        return checkKing != null && figureView.getX() == checkKing.getX()
+                && figureView.getY() == checkKing.getY();
     }
 
     public boolean isThereFigure(Move move) {
@@ -312,8 +305,8 @@ public class GameController {
             if ((end - start) < 2500) {
                 try {
                     Thread.sleep((2500 - (end - start)));
-                } catch (InterruptedException ignored) {
-                    System.out.println("debug: thread AI interrupted");
+                } catch (InterruptedException e) {
+                    e.printStackTrace(System.out);
                     return;
                 }
             }
@@ -419,6 +412,15 @@ public class GameController {
             if (!usedId.contains((byte) i, false)) {
                 figureViews[i].setVisible(false);
             }
+        }
+    }
+
+    private void updateFlippedFigures() {
+        if (Settings.account.isReversedTwoPlayers() && level == Level.TWO_PLAYERS) {
+            figureSet.updateFlippedUpper(true, game.getUpper());
+        } else {
+            figureSet.updateFlippedUpper(false, Color.BLACK);
+            figureSet.updateFlippedUpper(false, Color.WHITE);
         }
     }
 

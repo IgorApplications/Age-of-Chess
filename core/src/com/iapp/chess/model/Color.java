@@ -5,14 +5,13 @@ import com.iapp.chess.util.Text;
 public enum Color {
     BLACK(Text.BLACK), WHITE(Text.WHITE);
 
-    private String title;
+    private final String title;
 
     Color(String title) {
         this.title = title;
     }
 
-    @Override
-    public String toString() {
+    public String getText() {
         return title;
     }
 }

@@ -42,9 +42,8 @@ public class Logger implements Disposable {
         fpsStartTime = TimeUtils.nanoTime();
         ramStartTime = TimeUtils.nanoTime();
 
-        //TODO
-        //System.setOut(new PrintStream(stdOut));
-        //System.setErr(new PrintStream(stdErr));
+        System.setOut(new PrintStream(stdOut));
+        System.setErr(new PrintStream(stdErr));
     }
 
     public String getOutLogs() {

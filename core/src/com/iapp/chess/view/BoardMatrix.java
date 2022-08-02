@@ -6,9 +6,9 @@ import com.iapp.chess.util.Orientation;
 
 public class BoardMatrix {
 
-    // 56.62650602f
-    // 8.4939759f
-    // 60.24096386f
+    // 56.62_650_602f
+    // 8.4_939_759f
+    // 60.240_963_86f
     // 9.036_144_578f;
     public static float WIDTH = Orientation.figureSize;
     public static float HEIGHT = Orientation.figureSize;

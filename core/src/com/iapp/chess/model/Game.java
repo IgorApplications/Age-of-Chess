@@ -89,14 +89,7 @@ public class Game implements Serializable {
     }
 
     public Array<Move> getMoves(int x, int y) {
-        Array<Move> moves = getFigureMoves(x, y);
-
-        byte[] position = getKingPosition(colorMove);
-        if (isCheckKing(position[0], position[1]) || isKing(x, y)) {
-            moves = getMovesToSaveKing(moves);
-        }
-
-        return moves;
+        return getMovesToSaveKing(getFigureMoves(x, y));
     }
 
     private Array<Move> getFigureMoves(int x, int y) {
@@ -572,7 +565,7 @@ public class Game implements Serializable {
     }
 
     private boolean isTakeOnPass(Move move) {
-        if (!isPawn(move.getFigureX(), move.getFigureY())) return false;
+        if (!isPawn(move.getFigureX(), move.getFigureY()) || !isPawn(move.getMoveX(), move.getFigureY())) return false;
         return move.getMoveX() != move.getFigureX() && isCage(move.getMoveX(), move.getMoveY());
     }
 }

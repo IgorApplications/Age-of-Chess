@@ -10,8 +10,8 @@ public enum Level {
     HARD(Text.HARD_LEVEL_CAPS, 150),
     MASTER(Text.MASTER_LEVEL_CAPS, 250);
 
-    private String level;
-    private int coins;
+    private final String level;
+    private final int coins;
 
     Level(String level, int coins) {
         this.level = level;
@@ -22,8 +22,7 @@ public enum Level {
         return coins;
     }
 
-    @Override
-    public String toString() {
+    public String getText() {
         return level;
     }
 }

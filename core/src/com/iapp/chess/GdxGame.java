@@ -3,7 +3,6 @@ package com.iapp.chess;
 import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.FPSLogger;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
@@ -14,6 +13,7 @@ import com.badlogic.gdx.scenes.scene2d.actions.SequenceAction;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.iapp.chess.controller.Account;
 import com.iapp.chess.util.Assets;
+import com.iapp.chess.util.FigureSet;
 import com.iapp.chess.util.Orientation;
 import com.iapp.chess.util.Settings;
 import com.iapp.chess.view.SplashScreen;
@@ -26,11 +26,8 @@ public class GdxGame extends Game {
 	private final Launcher launcher;
 
 	private TextureAtlas chessAtlas;
-	private TextureAtlas standardFigures;
-	private TextureAtlas modeFigures;
-
-	private FPSLogger fpsLogger;
 	private TextureAtlas uiKitAtlas;
+	private FigureSet figureSet;
 	private ExecutorService threadPool;
 
 	private Skin buttonSkin;
@@ -44,26 +41,18 @@ public class GdxGame extends Game {
 
 	public TextureAtlas.AtlasRegion findRegion(String name) {
 		TextureAtlas.AtlasRegion region = chessAtlas.findRegion(name);
-		if (region == null) throw new RuntimeException("Iapp: region can not be null!" + " Title of region = " + name);
+		if (region == null) throw new IllegalArgumentException("Region can't' be null! Title of region = " + name);
 		return region;
 	}
 
 	public TextureAtlas.AtlasRegion findUIKitRegion(String name) {
 		TextureAtlas.AtlasRegion region = uiKitAtlas.findRegion(name);
-		if (region == null) throw new RuntimeException("Iapp: region can not be null!" + " Title of region = " + name);
+		if (region == null) throw new IllegalArgumentException("Region can't be null! Title of region = " + name);
 		return region;
 	}
 
-	public TextureAtlas getChessAtlas() {
-		return chessAtlas;
-	}
-
-	public TextureAtlas getStandardFigures() {
-		return standardFigures;
-	}
-
-	public TextureAtlas getModeFigures() {
-		return modeFigures;
+	public FigureSet getFigureSet() {
+		return figureSet;
 	}
 
 	public Skin getButtonSkin() {
@@ -144,9 +133,11 @@ public class GdxGame extends Game {
 		Settings.SOUNDS.initSounds();
 		chessAtlas = Settings.ASSETS.get(Assets.CHESS_ATLAS);
 		uiKitAtlas = Settings.ASSETS.get(Assets.UI_KIT);
-		standardFigures = Settings.ASSETS.get(Assets.STANDARD_FIGURES);
-		modeFigures = Settings.ASSETS.get(Assets.MODE_FIGURES);
-
+		figureSet = new FigureSet(
+				Settings.ASSETS.get(Assets.ISOMETRIC_FIGURES),
+				Settings.ASSETS.get(Assets.ROYALS_FIGURES),
+				Settings.ASSETS.get(Assets.STANDARD_FIGURES)
+		);
 		BitmapFont arial = Settings.FONT.createArial();
 
 		buttonSkin = new Skin();
@@ -180,13 +171,11 @@ public class GdxGame extends Game {
 	}
 
 	private void initGdxGUI() {
-		fpsLogger = new FPSLogger();
-
 		if (Gdx.app.getType() == Application.ApplicationType.Desktop) {
 			Settings.account.updateOrientationType(Orientation.Type.HORIZONTAL);
 			Settings.orientation.init(Orientation.Type.HORIZONTAL);
 		} else {
-			Settings.orientation.init(Settings.account.getOrientationType());
+			Settings.orientation.init(Settings.account.getOrientation());
 		}
 	}
 }

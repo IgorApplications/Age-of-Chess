@@ -76,6 +76,7 @@ public class Orientation {
 
     public static float figureMarginX;
     public static float figureMarginY;
+    public static float flippedMarginY;
 
     public static float moveMarginX;
     public static float moveMarginY;
@@ -190,6 +191,7 @@ public class Orientation {
 
         figureMarginX = Position.FIGURE_MARGIN_X.getValue(type);
         figureMarginY = Position.FIGURE_MARGIN_Y.getValue(type);
+        flippedMarginY = Position.FLIPPED_MARGIN_Y.getValue(type);
 
         moveMarginX = Position.MOVE_MARGIN_X.getValue(type);
         moveMarginY = Position.MOVE_MARGIN_Y.getValue(type);
@@ -279,13 +281,14 @@ public class Orientation {
 
         /**
          * GameView
-         * */
+         **/
         BOARD_EDGE(8.4_939_759f, 9.036_144_578f),
         FIGURE_SIZE(56.62_650_602f, 60.24_096_386f),
         FIGURE_SPRITE_SIZE(50, 53.19f),
 
         FIGURE_MARGIN_X(3.3f, 3.51f),
         FIGURE_MARGIN_Y(0.4f, 0.426f),
+        FLIPPED_MARGIN_Y(5.9f, 5.7f),
 
         MOVE_MARGIN_X(28.25f, 30),
         MOVE_MARGIN_Y(27.25f, 28.5f),

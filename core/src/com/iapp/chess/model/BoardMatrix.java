@@ -1,9 +1,6 @@
 package com.iapp.chess.model;
 
-import com.badlogic.gdx.utils.Array;
-
 import java.io.Serializable;
-import java.util.Arrays;
 
 public class BoardMatrix implements Serializable {
 

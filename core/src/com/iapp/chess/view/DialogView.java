@@ -93,7 +93,7 @@ public class DialogView {
     }
 
     private void initFinishTitle(Dialog dialog, Result result) {
-        Label resultText = new Label(result.toString(), Settings.gdxGame.getLabelSkin());
+        Label resultText = new Label(result.getText(), Settings.gdxGame.getLabelSkin());
         resultText.setFontScale(0.5f);
 
         ImageButton buttonHide = new ImageButton(Settings.gdxGame.getUIKit(), "gray_cancel");
@@ -154,7 +154,7 @@ public class DialogView {
         text4.setFontScale(0.4f);
         text4.setWrap(true);
 
-        Label levelAI = new Label(level.toString(), Settings.gdxGame.getUIKit());
+        Label levelAI = new Label(level.getText(), Settings.gdxGame.getUIKit());
         levelAI.setColor(Color.GOLD);
         levelAI.setFontScale(0.4f);
 
@@ -243,10 +243,10 @@ public class DialogView {
         dialog.setPosition(Orientation.choiceDialogX, Orientation.choiceDialogY);
         dialog.setSize(410, 320);
 
-        Image imageQueen = new Image(gameView.findImageFigure("white_queen"));
-        Image imageRook = new Image(gameView.findImageFigure("white_rook"));
-        Image imageBishop = new Image(gameView.findImageFigure("white_bishop"));
-        Image imageKnight = new Image(gameView.findImageFigure("white_knight"));
+        Image imageQueen = new Image(gameView.getFigureSet().getQueen(gameController.getColorMove()));
+        Image imageRook = new Image(gameView.getFigureSet().getRook(gameController.getColorMove()));
+        Image imageBishop = new Image(gameView.getFigureSet().getBishop(gameController.getColorMove()));
+        Image imageKnight = new Image(gameView.getFigureSet().getBishop(gameController.getColorMove()));
 
         Label title = new Label(Text.TRANSFORM_PAWN, Settings.gdxGame.getLabelSkin());
         title.setFontScale(0.5f);

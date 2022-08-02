@@ -17,7 +17,7 @@ public class MenuController {
 
         GameView gameView = new GameView();
         gameController.setGameView(gameView);
-        gameView.initGUI(gameController);
+        gameView.initGraphics(gameController);
 
         Settings.gdxGame.goToScreen(lastStage, Actions.run(() -> {
             Settings.gdxGame.setScreen(gameView);

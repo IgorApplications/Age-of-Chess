@@ -1,6 +1,6 @@
 android {
     buildToolsVersion "32.1.0-rc1"
-    compileSdkVersion 32
+    compileSdkVersion 33
     sourceSets {
         main {
             manifest.srcFile 'AndroidManifest.xml'
@@ -19,9 +19,9 @@ android {
     defaultConfig {
         applicationId "com.iapp.chess"
         minSdkVersion 24
-        targetSdkVersion 32
-        versionCode 26
-        versionName "1.0.03"
+        targetSdkVersion 33
+        versionCode 33
+        versionName "1.0.05"
     }
     buildTypes {
         release {
@@ -30,8 +30,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 }
 

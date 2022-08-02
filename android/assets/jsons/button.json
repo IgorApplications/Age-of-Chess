@@ -11,7 +11,8 @@
     "closed": { "down": "down_closed", "up": "up_closed", "font": "arial", "fontColor": "white" }
   },
   "com.badlogic.gdx.scenes.scene2d.ui.ImageButton$ImageButtonStyle": {
-    "board1": { "down": "board1_down", "up": "board1_up", "checked": "board1_checked" },
-    "board2": { "down": "board2_down", "up": "board2_up", "checked": "board2_checked"  }
+    "standard": { "down": "standard_down", "up": "standard_up", "checked": "standard_checked" },
+    "isometric": { "down": "isometric_down", "up": "isometric_up", "checked": "isometric_checked"  },
+    "royal": { "down": "royal_down", "up": "royal_up", "checked": "royal_checked"  }
   }
 }

@@ -4,22 +4,24 @@ import com.badlogic.gdx.utils.Array;
 import com.iapp.chess.model.Color;
 import com.iapp.chess.model.Game;
 import com.iapp.chess.model.Move;
-import com.iapp.chess.util.Pair;
-import jdk.nashorn.internal.ir.IdentNode;
 
-import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class AI {
 
-    private final float[][] pawnEvalWhite = {
+    public static final short PAWN = 10;
+    public static final short ROOK = 50;
+    public static final short KNIGHT = 30;
+    public static final short BISHOP = 30;
+    public static final short QUEEN = 90;
+    public static final short KING = 900;
+
+    private final float[][] whitePawnEval = {
             {0.0f,  0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
             {5.0f, 5.0f, 5.0f, 5.0f, 5.0f, 5.0f, 5.0f, 5.0f},
             {1.0f, 1.0f, 2.0f, 3.0f, 3.0f, 2.0f, 1.0f, 1.0f},
@@ -30,7 +32,7 @@ public class AI {
             {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}
     };
 
-    private final float[][] pawnEvalBlack = reverseMatrix(pawnEvalWhite);
+    private final float[][] blackPawnEval = reverseMatrix(whitePawnEval);
 
     private final float[][] knightEval = {
             {-5.0f, -4.0f, -3.0f, -3.0f, -3.0f, -3.0f, -4.0f, -5.0f},
@@ -43,7 +45,7 @@ public class AI {
             {-5.0f, -4.0f, -3.0f, -3.0f, -3.0f, -3.0f, -4.0f, -5.0f}
     };
 
-    private final float[][] bishopEvalWhite = {
+    private final float[][] whiteBishopEval = {
             {-2.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -2.0f},
             {-1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f},
             {-1.0f, 0.0f, 0.5f, 1.0f, 1.0f, 0.5f, 0.0f, -1.0f},
@@ -54,9 +56,9 @@ public class AI {
             {-2.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -2.0f}
     };
 
-    private final float[][] bishopEvalBlack = reverseMatrix(bishopEvalWhite);
+    private final float[][] blackBishopEval = reverseMatrix(whiteBishopEval);
 
-    private final float[][] rookEvalWhite = {
+    private final float[][] whiteRookEval = {
             {0.0f,  0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
             {0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.5f},
             {-0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -0.5f},
@@ -67,9 +69,9 @@ public class AI {
             {0.0f, 0.0f, 0.0f, 0.5f, 0.5f, 0.0f, 0.0f, 0.0f}
     };
 
-    private final float[][] rookEvalBlack = reverseMatrix(rookEvalWhite);
+    private final float[][] blackRookEval = reverseMatrix(whiteRookEval);
 
-    private final float[][] evalQueen = {
+    private final float[][] queenEval = {
             {-2.0f, -1.0f, -1.0f, -0.5f, -0.5f, -1.0f, -1.0f, -2.0f},
             {-1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f},
             {-1.0f, 0.0f, 0.5f, 0.5f, 0.5f, 0.5f, 0.0f, -1.0f},
@@ -80,7 +82,7 @@ public class AI {
             {-2.0f, -1.0f, -1.0f, -0.5f, -0.5f, -1.0f, -1.0f, -2.0f}
     };
 
-    private final float[][] kingEvalWhite = {
+    private final float[][] whiteKingEval = {
             {-3.0f, -4.0f, -4.0f, -5.0f, -5.0f, -4.0f, -4.0f, -3.0f},
             {-3.0f, -4.0f, -4.0f, -5.0f, -5.0f, -4.0f, -4.0f, -3.0f},
             {-3.0f, -4.0f, -4.0f, -5.0f, -5.0f, -4.0f, -4.0f, -3.0f},
@@ -91,57 +93,49 @@ public class AI {
             {2.0f, 3.0f, 1.0f, 0.0f, 0.0f, 1.0f, 3.0f, 2.0f}
     };
 
-    private final float[][] kingEvalBlack = reverseMatrix(kingEvalWhite);
+    private final float[][] blackKingEval = reverseMatrix(whiteKingEval);
 
     private final ExecutorService aiThreadPool;
+    private final AtomicInteger countMinimaxThreads;
+    private final Map<Move, Integer> minimaxResult;
     private final int depth;
-    private Color aiColor;
-    private Color userColor;
+    private final Color aiColor;
+    private final Color userColor;
 
     public AI(int depth, ThreadsMode threadsMode, Color color) {
         this.depth = depth;
-        aiThreadPool = Executors.newFixedThreadPool((int) (Runtime.getRuntime().availableProcessors() * threadsMode.coefficient));
-
         aiColor = color;
         userColor = reverse(color);
-    }
 
-    public void setAIColor(Color aiColor) {
-        this.aiColor = aiColor;
-        userColor = reverse(aiColor);
+        aiThreadPool = Executors.newFixedThreadPool((int) (Runtime.getRuntime().availableProcessors() * threadsMode.coefficient));
+        countMinimaxThreads = new AtomicInteger(0);
+        minimaxResult = new ConcurrentHashMap<>();
     }
 
     public Color getAIColor() {
         return aiColor;
     }
 
-    public void setUserColor(Color userColor) {
-        this.userColor = userColor;
-        aiColor = reverse(userColor);
-    }
-
     public Color getUserColor() {
         return userColor;
     }
 
-    private AtomicInteger countMinimaxThreads;
-    private Map<Move, Integer> minimaxResult;
-
     public void getMove(Game game, AIListener callback) {
-        countMinimaxThreads = new AtomicInteger(0);
-        minimaxResult = new ConcurrentHashMap<>();
-        Game cloneGame = game.cloneGame();
+        countMinimaxThreads.set(0);
+        minimaxResult.clear();
 
+        Game clonedGame = game.cloneGame();
         Runnable task = () -> {
             try {
+                long start = System.currentTimeMillis();
                 int bestMove = Integer.MIN_VALUE;
                 Move virtualAIMove = null;
 
-                for (Move move : getAllMoves(cloneGame, aiColor)) {
-                    cloneGame.makeMove(move);
-                    getParallelMiniMax(cloneGame.cloneGame(), move, depth - 1, -10_000, 10_000, userColor);
+                for (Move move : getAllMoves(clonedGame, aiColor)) {
+                    clonedGame.makeMove(move);
+                    getParallelMiniMax(clonedGame.cloneGame(), move, depth - 1, -10_000, 10_000, userColor);
                     countMinimaxThreads.incrementAndGet();
-                    cloneGame.cancelMove();
+                    clonedGame.cancelMove();
                 }
 
                 while (countMinimaxThreads.get() != 0) {
@@ -187,6 +181,52 @@ public class AI {
         aiThreadPool.execute(task);
     }
 
+    private int getMiniMax(Game clonedGame, int depth, int alpha, int beta, Color color) throws InterruptedException  {
+        if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
+
+        if (depth == 0) {
+            return evaluateBoard(clonedGame);
+        }
+
+        Array<Move> moves = getAllMoves(clonedGame, color);
+
+        int bestMove;
+        if (color == aiColor) {
+            bestMove = Integer.MIN_VALUE;
+
+            for (Move move : moves) {
+                clonedGame.makeMove(move);
+
+                int value = getMiniMax(clonedGame,depth - 1, alpha, beta, clonedGame.reverse(color));
+                bestMove = Math.max(bestMove, value);
+
+                clonedGame.cancelMove();
+
+                alpha = Math.max(alpha, bestMove);
+                if (beta <= alpha) {
+                    return bestMove;
+                }
+            }
+        } else {
+            bestMove = Integer.MAX_VALUE;
+
+            for (Move move : moves) {
+                clonedGame.makeMove(move);
+
+                int value = getMiniMax(clonedGame, depth - 1, alpha, beta, clonedGame.reverse(color));
+                bestMove = Math.min(bestMove, value);
+
+                clonedGame.cancelMove();
+
+                beta = Math.min(beta, bestMove);
+                if (beta <= alpha) {
+                    return bestMove;
+                }
+            }
+        }
+
+        return bestMove;
+    }
 
     private int evaluateBoard(Game game) {
         int totalEvaluation = 0;
@@ -204,68 +244,21 @@ public class AI {
         float eval = 0;
 
         if (game.isPawn(x, y)) {
-            if (y == 7 || y == 0) eval =  90 + evalQueen[y][x];
-            else eval = 10 + (game.getColor(x, y) == Color.BLACK ? pawnEvalBlack[y][x] : pawnEvalWhite[y][x]);
+            if (y == 7 || y == 0) eval =  90 + queenEval[y][x];
+            else eval = PAWN + (game.getColor(x, y) == Color.BLACK ? blackPawnEval[y][x] : whitePawnEval[y][x]);
         } else if (game.isRook(x, y)) {
-            eval = 50 + (game.getColor(x, y) == Color.BLACK ? rookEvalBlack[y][x] : rookEvalWhite[y][x]);
+            eval = ROOK + (game.getColor(x, y) == Color.BLACK ? blackRookEval[y][x] : whiteRookEval[y][x]);
         } else if (game.isKnight(x, y)) {
-            eval = 30 + knightEval[y][x];
+            eval = KNIGHT + knightEval[y][x];
         } else if (game.isBishop(x, y)) {
-            eval =  30 + (game.getColor(x, y) == Color.BLACK ? bishopEvalBlack[y][x] : bishopEvalWhite[y][x]);
+            eval = BISHOP + (game.getColor(x, y) == Color.BLACK ? blackBishopEval[y][x] : whiteBishopEval[y][x]);
         } else if (game.isQueen(x, y)) {
-            eval =  90 + evalQueen[y][x];
+            eval =  QUEEN + queenEval[y][x];
         } else if (game.isKing(x, y)) {
-            eval = 900 + (game.getColor(x, y) == Color.BLACK ? kingEvalBlack[y][x] : kingEvalWhite[y][x]);
+            eval = KING + (game.getColor(x, y) == Color.BLACK ? blackKingEval[y][x] : whiteKingEval[y][x]);
         }
 
         return game.getColor(x, y) == aiColor ? eval : -eval;
-    }
-
-    private int getMiniMax(Game cloneGame, int depth, int alpha, int beta, Color color) throws InterruptedException  {
-        if (Thread.currentThread().isInterrupted()) throw new InterruptedException();
-
-        if (depth == 0) {
-            return evaluateBoard(cloneGame);
-        }
-
-        Array<Move> moves = getAllMoves(cloneGame, color);
-
-        int bestMove;
-        if (color == aiColor) {
-            bestMove = Integer.MIN_VALUE;
-
-            for (Move move : moves) {
-                cloneGame.makeMove(move);
-
-                int value = getMiniMax(cloneGame,depth - 1, alpha, beta, cloneGame.reverse(color));
-                bestMove = Math.max(bestMove, value);
-
-                cloneGame.cancelMove();
-
-                alpha = Math.max(alpha, bestMove);
-                if (beta <= alpha) {
-                    return bestMove;
-                }
-            }
-        } else {
-            bestMove = Integer.MAX_VALUE;
-
-            for (Move move : moves) {
-                cloneGame.makeMove(move);
-
-                int value = getMiniMax(cloneGame, depth - 1, alpha, beta, cloneGame.reverse(color));
-                bestMove = Math.min(bestMove, value);
-
-                cloneGame.cancelMove();
-            }
-
-            beta = Math.min(beta, bestMove);
-            if (beta <= alpha) {
-                return bestMove;
-            }
-        }
-
-        return bestMove;
     }
 
     private Array<Move> getAllMoves(Game game, Color color) {

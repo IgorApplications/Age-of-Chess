@@ -38,17 +38,13 @@ public class UIDialog extends Actor {
 
     @Override
     public void setSize(float width, float height) {
-        System.out.println("SIZE updated!");
         uiScrollPane.setSize(width - MARGIN_DIALOG_X * 2, height - MARGIN_DIALOG_Y * 2);
-
         super.setSize(width, height);
     }
 
     @Override
     public void setPosition(float x, float y) {
-        System.out.println("POSITION updated!");
         uiScrollPane.setPosition(x + MARGIN_DIALOG_X, y + MARGIN_DIALOG_Y);
-
         super.setPosition(x, y);
     }
 

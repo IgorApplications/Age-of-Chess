@@ -2,10 +2,8 @@ package com.iapp.chess.util;
 
 import com.badlogic.gdx.assets.AssetDescriptor;
 import com.badlogic.gdx.assets.AssetManager;
-import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
-import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 
 public class Assets extends AssetManager {
 
@@ -41,8 +39,11 @@ public class Assets extends AssetManager {
     public static final AssetDescriptor<TextureAtlas> STANDARD_FIGURES =
             new AssetDescriptor<>("atlases/standard_figures.atlas",  TextureAtlas.class);
 
-    public static final AssetDescriptor<TextureAtlas> MODE_FIGURES =
-            new AssetDescriptor<>("atlases/mode1_figures.atlas",  TextureAtlas.class);
+    public static final AssetDescriptor<TextureAtlas> ISOMETRIC_FIGURES =
+            new AssetDescriptor<>("atlases/isometric_figures.atlas",  TextureAtlas.class);
+
+    public static final AssetDescriptor<TextureAtlas> ROYALS_FIGURES =
+            new AssetDescriptor<>("atlases/royal_figures.atlas",  TextureAtlas.class);
 
     public static Assets getInstance() {
         return INSTANCE;
@@ -61,6 +62,7 @@ public class Assets extends AssetManager {
         load(LOSE_SOUND);
         load(UI_KIT);
         load(STANDARD_FIGURES);
-        load(MODE_FIGURES);
+        load(ROYALS_FIGURES);
+        load(ISOMETRIC_FIGURES);
     }
 }

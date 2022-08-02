@@ -9,14 +9,13 @@ public enum Result {
     BLACK_VICTORY(Text.BLACK_VICTORY),
     WHITE_VICTORY(Text.WHITE_VICTORY);
 
-    private String result;
+    private final String result;
 
     Result(String result) {
         this.result = result;
     }
 
-    @Override
-    public String toString() {
+    public String getText() {
         return result;
     }
 }

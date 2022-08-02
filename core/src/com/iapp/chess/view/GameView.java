@@ -16,6 +16,7 @@ import com.iapp.chess.controller.GameController;
 import com.iapp.chess.controller.Level;
 import com.iapp.chess.model.*;
 import com.iapp.chess.util.*;
+
 import java.util.Arrays;
 
 public class GameView implements Screen {
@@ -35,7 +36,7 @@ public class GameView implements Screen {
     private Stage stage;
     private Label countTurns;
 
-    private TextureAtlas figureSet;
+    private final FigureSet figureSet;
     private final TextureAtlas.AtlasRegion background;
     private final TextureAtlas.AtlasRegion board;
     private final TextureAtlas.AtlasRegion greenFrame;
@@ -65,14 +66,11 @@ public class GameView implements Screen {
         redFrame = Settings.gdxGame.findRegion("red_frame");
         blueFrame = Settings.gdxGame.findRegion("blue_frame");
 
-        if (Settings.account.getChosenFigureSet() == FigureSet.STANDARD) {
-            figureSet = Settings.gdxGame.getStandardFigures();
-        } else if (Settings.account.getChosenFigureSet() == FigureSet.MODE) {
-            figureSet = Settings.gdxGame.getModeFigures();
-        }
+        figureSet = Settings.gdxGame.getFigureSet();
+        figureSet.updateSetType(Settings.account.getChosenFigureSet());
     }
 
-    public void initGUI(GameController gameController) {
+    public void initGraphics(GameController gameController) {
         this.gameController = gameController;
         initStage();
         gameController.initViewFigures(figureSet);
@@ -101,7 +99,7 @@ public class GameView implements Screen {
         return moves;
     }
 
-    public TextureAtlas getFigureSet() {
+    public FigureSet getFigureSet() {
         return figureSet;
     }
 
@@ -226,7 +224,7 @@ public class GameView implements Screen {
         batch.begin();
         batch.draw(background, 0, 0, Orientation.cameraWidth, Orientation.cameraHeight);
         batch.draw(board, Orientation.boardX, Orientation.boardY, Orientation.boardWidth, Orientation.boardHeight);
-        Arrays.stream(gameController.getFigureViews()).forEach(f -> f.draw(batch));
+        Arrays.stream(gameController.getFigureViews()).forEach(f -> f.draw(batch, figureSet));
         drawRedHint();
         drawGreenHint();
         drawGreenCross();
@@ -235,7 +233,7 @@ public class GameView implements Screen {
         batch.end();
 
         renderer.begin(ShapeRenderer.ShapeType.Filled);
-        if (Settings.account.getOrientationType() == Orientation.Type.VERTICAL) drawLines();
+        if (Settings.account.getOrientation() == Orientation.Type.VERTICAL) drawLines();
         drawMoves();
         renderer.end();
 
@@ -245,7 +243,7 @@ public class GameView implements Screen {
         String separator;
         if (gameController.isAIMakeMove()) separator = "... ";
         else separator = ". ";
-        countTurns.setText(gameController.getTurn() + separator + gameController.getColorMove());
+        countTurns.setText(gameController.getTurn() + separator + gameController.getColorMove().getText());
 
         stage.act(delta);
         stage.draw();
@@ -275,10 +273,6 @@ public class GameView implements Screen {
         batch.dispose();
         renderer.dispose();
         Settings.launcher.addOnFinish(null);
-    }
-
-    TextureAtlas.AtlasRegion findImageFigure(String region) {
-        return figureSet.findRegion(region);
     }
 
     void addImage(ImageButton imageButton, TextureAtlas.AtlasRegion region) {
@@ -396,7 +390,7 @@ public class GameView implements Screen {
 
     private void initLabels() {
         countTurns = new Label("", Settings.gdxGame.getLabelSkin());
-        countTurns.setText("1. " + gameController.getColorMove());
+        countTurns.setText("1. " + gameController.getColorMove().getText());
         countTurns.setFontScale(Orientation.labelCountMovesFontScale);
         countTurns.setPosition(Orientation.labelCountMovesX, Orientation.labelCountMovesY);
 
@@ -404,10 +398,10 @@ public class GameView implements Screen {
         header.setPosition(0, Orientation.headerY);
         header.setWidth(Orientation.cameraWidth);
 
-        Label level = new Label(gameController.getLevel().toString(), Settings.gdxGame.getLabelSkin());
+        Label level = new Label(gameController.getLevel().getText(), Settings.gdxGame.getLabelSkin());
         level.setFontScale(Orientation.labelLevelFontScale);
 
-        if (Settings.account.getOrientationType() == Orientation.Type.VERTICAL) {
+        if (Settings.account.getOrientation() == Orientation.Type.VERTICAL) {
             Label title = new Label(Text.TITLE, Settings.gdxGame.getLabelSkin());
             title.setFontScale(0.7f);
             header.add(title).center().row();

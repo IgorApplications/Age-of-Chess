@@ -8,29 +8,32 @@ import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.iapp.chess.controller.GameController;
+import com.iapp.chess.model.Color;
 import com.iapp.chess.model.Move;
 import com.iapp.chess.util.CallListener;
+import com.iapp.chess.util.FigureSet;
 import com.iapp.chess.util.Orientation;
+import com.iapp.chess.util.Settings;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class FigureView {
 
-    private GameController gameController;
     private boolean visible = true;
     private int x = -1, y = -1;
     private int lastX = -1, lastY = -1;
     private float effectX, effectY;
+    private Color color;
 
     private boolean makesMove;
     private Sprite sprite;
     private CallListener callback;
 
-    public FigureView(int x, int y, TextureAtlas.AtlasRegion image) {
-        this.gameController = gameController;
+    public FigureView(int x, int y, Color color, TextureAtlas.AtlasRegion image) {
         this.x = x;
         this.y = y;
+        this.color = color;
         sprite = new Sprite(image);
     }
 
@@ -127,14 +130,20 @@ public class FigureView {
 
     private boolean effectCompleted = true;
 
-    public void draw(SpriteBatch batch) {
+    public void draw(SpriteBatch batch, FigureSet figureSet) {
         if (!visible) return;
 
         effectY -= effectY / 5;
         effectX -= effectX / 5;
         sprite.setPosition(BoardMatrix.getPositionX(x) - effectX, BoardMatrix.getPositionY(y) - effectY + 2);
         sprite.setSize(Orientation.figureSpriteSize, Orientation.figureSpriteSize);
-        batch.draw(sprite, BoardMatrix.getPositionX(x) - effectX + Orientation.figureMarginX, BoardMatrix.getPositionY(y) - effectY + Orientation.figureMarginY,
+
+        float flippedMarginY = 0;
+        if (figureSet.isFlipped(color)) flippedMarginY = Orientation.flippedMarginY;
+
+        batch.draw(sprite,
+                BoardMatrix.getPositionX(x) - effectX + Orientation.figureMarginX,
+                BoardMatrix.getPositionY(y) - effectY + Orientation.figureMarginY + flippedMarginY,
                 Orientation.figureSpriteSize, Orientation.figureSpriteSize);
 
         if (!effectCompleted && effectX < 0.1f && effectY < 0.1f && effectX > -0.1f && effectY > -0.1f) {
