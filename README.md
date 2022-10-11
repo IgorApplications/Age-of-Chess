@@ -1,2 +1,3 @@
 # Age-of-Chess
-Addictive chess strategy game with different levels of AI difficulty.
+
+Age of Chess is a new cross-platform strategy based on classic chess with two modes: multiplayer, single player.
