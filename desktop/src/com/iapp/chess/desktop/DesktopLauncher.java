@@ -11,8 +11,6 @@ import com.iapp.chess.util.CallListener;
 public class DesktopLauncher implements Launcher {
 
 	public static void main (String[] arg) {
-		System.setProperty("user.name", "Пользователь");
-
 		Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
 		config.setWindowedMode(900, 500);
 		config.setTitle("Chess");
